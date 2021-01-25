@@ -10,6 +10,7 @@ VirtualBox에 이미지 프로비저닝을 쉽게 하기 위하여 [Vagrant](htt
 이미지는 centos8-stream으로 별도로 만든 이미지를 사용하였습니다.
 
 '''
+{
 cat > vagrantfile << EOF
 Vagrant.configure("2") do |config|
   config.vm.box = "hallsholicker/centos8-stream-k8s"
@@ -45,6 +46,7 @@ end
 EOF
 
 vagrant up
+}
 '''
 
 # Preset
@@ -56,6 +58,7 @@ Expect의 EOF와 Cat의 EOF가 겹치게 되므로 Cat의 종료 단어를 ENDFI
 
 ### SSH Key Generater
 '''
+{
 dnf -y install expect
 
 cd ~/
@@ -85,11 +88,12 @@ The key's randomart image is:
 |       o B o=+.  |
 |      . . + o=.  |
 +----[SHA256]-----+
+}
 '''
 
 ### SSH Key Copy & hostname
 '''
-
+{
 cat <<EOF | sudo tee /root/Preset.sh
 #!/bin/bash
 
@@ -140,5 +144,5 @@ sleep 1
 done
 
 EOF
-
+}
 '''
