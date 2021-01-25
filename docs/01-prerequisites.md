@@ -1,63 +1,144 @@
 # Prerequisites
 
-## Google Cloud Platform
+# VirtualBox
 
-This tutorial leverages the [Google Cloud Platform](https://cloud.google.com/) to streamline provisioning of the compute infrastructure required to bootstrap a Kubernetes cluster from the ground up. [Sign up](https://cloud.google.com/free/) for $300 in free credits.
+가상 머신은 [VirtualBox](https://www.virtualbox.org/wiki/Downloads)를 사용하였습니다.
 
-[Estimated cost](https://cloud.google.com/products/calculator/#id=55663256-c384-449c-9306-e39893e23afb) to run this tutorial: $0.23 per hour ($5.46 per day).
+# Vagrant
 
-> The compute resources required for this tutorial exceed the Google Cloud Platform free tier.
+VirtualBox에 이미지 프로비저닝을 쉽게 하기 위하여 [Vagrant](https://www.vagrantup.com/)를 사용하였습니다.
+이미지는 centos8-stream으로 별도로 만든 이미지를 사용하였습니다.
 
-## Google Cloud Platform SDK
+'''
+cat > vagrantfile << EOF
+Vagrant.configure("2") do |config|
+  config.vm.box = "hallsholicker/centos8-stream-k8s"
 
-### Install the Google Cloud SDK
+  config.vm.define "k8s-master-1" do |master1|
+    master1.vm.network "private_network", ip: "10.240.0.11"
+  end
 
-Follow the Google Cloud SDK [documentation](https://cloud.google.com/sdk/) to install and configure the `gcloud` command line utility.
+  config.vm.define "k8s-master-2" do |master2|
+    master2.vm.network "private_network", ip: "10.240.0.12"
+  end
 
-Verify the Google Cloud SDK version is 262.0.0 or higher:
+  config.vm.define "k8s-master-3" do |master3|
+    master3.vm.network "private_network", ip: "10.240.0.13"
+  end
 
-```
-gcloud version
-```
+  config.vm.define "k8s-worker-1" do |worker1|
+    worker1.vm.network "private_network", ip: "10.240.0.21"
+  end
+Prerequier
+  config.vm.define "k8s-worker-2" do |worker2|
+    worker2.vm.network "private_network", ip: "10.240.0.22"
+  end
 
-### Set a Default Compute Region and Zone
+  config.vm.define "k8s-worker-3" do |worker3|
+    worker3.vm.network "private_network", ip: "10.240.0.23"
+  end
+  
+  config.vm.define "k8s-client" do |client|
+    client.vm.network "private_netwrok", ip: "10.240.0.100"
+  end
+end
+EOF
 
-This tutorial assumes a default compute region and zone have been configured.
+vagrant up
+'''
 
-If you are using the `gcloud` command-line tool for the first time `init` is the easiest way to do this:
+# Preset
 
-```
-gcloud init
-```
+K8S를 연습하기 전에 서버 접속 및 hostname등 기본적인 세팅을 진행 합니다.
+## SSH Key setting
+K8S 설정 작업은 k8s-client에서 진행을 할 예정이며, 원활한 접속을 위해 k8s-client의 ssh key를 전체 서버에 설정하겠습니다.
+Expect의 EOF와 Cat의 EOF가 겹치게 되므로 Cat의 종료 단어를 ENDFILE로 변경하여 스크립트를 생성합니다.
 
-Then be sure to authorize gcloud to access the Cloud Platform with your Google user credentials:
+### SSH Key Generater
+'''
+dnf -y install expect
 
-```
-gcloud auth login
-```
+cd ~/
+mkdir .ssh
+su -
 
-Next set a default compute region and compute zone:
+ssh-keygen
 
-```
-gcloud config set compute/region us-west1
-```
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa): [엔터키]
+Created directory '/root/.ssh'.
+Enter passphrase (empty for no passphrase): [엔터키]
+Enter same passphrase again: [엔터키]
+Your identification has been saved in /root/.ssh/id_rsa.
+Your public key has been saved in /root/.ssh/id_rsa.pub.
+The key fingerprint is:
+SHA256:u80BrVp55p2RbzJhzaFplqcDsGCOBFZ0Ag4V62z0Zko root@localhost.localdomain
+The key's randomart image is:
++---[RSA 3072]----+
+|..+=+ .          |
+| oo. o           |
+| .+.             |
+| + .. o ..    .  |
+|  E.++ .So.  * . |
+| o +. . .=. O.+  |
+|  .     = +=o+   |
+|       o B o=+.  |
+|      . . + o=.  |
++----[SHA256]-----+
+'''
 
-Set a default compute zone:
+### SSH Key Copy & hostname
+'''
 
-```
-gcloud config set compute/zone us-west1-c
-```
+cat <<EOF | sudo tee /root/Preset.sh
+#!/bin/bash
 
-> Use the `gcloud compute zones list` command to view additional regions and zones.
+ROOTPW="vagrant"
+declare -A Target
+Target=( ["k8s-master-1"]="10.240.0.11" \
+         ["k8s-master-2"]="10.240.0.12" \
+         ["k8s-master-3"]="10.240.0.13" \
+         ["k8s-worker-1"]="10.240.0.21" \
+         ["k8s-worker-2"]="10.240.0.22" \
+         ["k8s-worker-3"]="10.240.0.23" )
 
-## Running Commands in Parallel with tmux
+for key in "\${!Target[@]}"; do
 
-[tmux](https://github.com/tmux/tmux/wiki) can be used to run commands on multiple compute instances at the same time. Labs in this tutorial may require running the same commands across multiple compute instances, in those cases consider using tmux and splitting a window into multiple panes with synchronize-panes enabled to speed up the provisioning process.
+  echo "\${Target[\$key]} \${key}" >> /etc/hosts
 
-> The use of tmux is optional and not required to complete this tutorial.
+  echo "\${key} SSH Public Key Copy Start!"
 
-![tmux screenshot](images/tmux-screenshot.png)
+  expect <<EOL
+  spawn ssh-copy-id -i /root/.ssh/id_rsa.pub \${key}
+  expect (yes/no/\[fingerprint\])?
+  send "yes\n"
+  expect -re "password:"
+  send "\${ROOTPW}\n"
+  expect eof
+EOL
 
-> Enable synchronize-panes by pressing `ctrl+b` followed by `shift+:`. Next type `set synchronize-panes on` at the prompt. To disable synchronization: `set synchronize-panes off`.
+  echo "\${key} SSH Public Key Copy Complate!"
 
-Next: [Installing the Client Tools](02-client-tools.md)
+sleep 1
+done
+
+for key in "\${!Target[@]}"; do
+
+  echo "\${key} append hostname to hosts file & Set hostname Start!"
+
+  expect <<EOL
+  spawn ssh \${Target[\$key]}
+  expect -re "~]#"
+  send "echo -e \"10.240.0.11 k8s-master-1\n10.240.0.12 k8s-master-2\n10.240.0.13 k8s-master-3\n10.240.0.21 k8s-worker-1\n10.240.0.22 k8s-worker-2\n10.240.0.23 k8s-worker-3\" >> /etc/hosts \r\n"
+  send "hostnamectl set-hostname \${key} \r\n"
+  expect eof
+EOL
+
+  echo "\${key} append hostname to hosts file & Set hostname Complate!"
+
+sleep 1
+done
+
+EOF
+
+'''
