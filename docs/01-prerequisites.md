@@ -52,7 +52,6 @@ vagrant up
 K8S를 연습하기 전에 서버 접속 및 hostname등 기본적인 세팅을 진행 합니다.
 ## SSH Key setting
 K8S 설정 작업은 k8s-client에서 진행을 할 예정이며, 원활한 접속을 위해 k8s-client의 ssh key를 전체 서버에 설정하겠습니다.
-Expect의 EOF와 Cat의 EOF가 겹치게 되므로 Cat의 종료 단어를 ENDFILE로 변경하여 스크립트를 생성합니다.
 
 ### SSH Key Generater
 ```
