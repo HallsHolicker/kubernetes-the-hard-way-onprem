@@ -1,6 +1,6 @@
 # Installing the Client Tools
 
-이번 실습에서는 구성에 필요한 유틸리티를 설치하겠습니다. 
+이번 실습에서는 Kubernetes 구성에 필요한 유틸리티를 설치하겠습니다. 
 * [cfssl](https://github.com/cloudflare/cfssl)
 * [cfssljson](https://github.com/cloudflare/cfssl)
 * [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl)
@@ -11,7 +11,7 @@
 `cfssl`와 `cfssljson`은 [PKI Infrastructure](https://en.wikipedia.org/wiki/Public_key_infrastructure)와 TLS 인증서를 만들기 위한 유틸리티입니다.
 
 
-`cfssl`와 `cfssljson`를 k8s-client에 설치하겠습니다.:
+`cfssl`와 `cfssljson`를 `k8s-client`에 설치하겠습니다:
 
 
 ```
@@ -58,8 +58,6 @@ Runtime: go1.13
 
 `kubectl`은 Kubernetes API Server와 통신을 하기 위한 유틸리티입니다. 공식 릴리즈된 바이너리 버전을 설치하겠습니다.
 
-### Linux
-
 ```
 wget https://storage.googleapis.com/kubernetes-release/release/v1.15.3/bin/linux/amd64/kubectl
 ```
@@ -86,4 +84,4 @@ kubectl version --client
 Client Version: version.Info{Major:"1", Minor:"15", GitVersion:"v1.15.3", GitCommit:"2d3c76f9091b6bec110a5e63777c332469e0cba2", GitTreeState:"clean", BuildDate:"2019-08-19T11:13:54Z", GoVersion:"go1.12.9", Compiler:"gc", Platform:"linux/amd64"}
 ```
 
-Next: [Provisioning Compute Resources](03-compute-resources.md)
+Next: [Provisioning a CA and Generating TLS Certificates](04-certificate-authority.md)

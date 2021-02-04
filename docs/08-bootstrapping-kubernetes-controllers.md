@@ -1,22 +1,23 @@
 # Bootstrapping the Kubernetes Control Plane
 
-In this lab you will bootstrap the Kubernetes control plane across three compute instances and configure it for high availability. You will also create an external load balancer that exposes the Kubernetes API Servers to remote clients. The following components will be installed on each node: Kubernetes API Server, Scheduler, and Controller Manager.
+이번 실습은 고가용성을 위해 Kubernetes control plane을 3개의 node에 부트스트랩 합니다.
 
 ## Prerequisites
 
-The commands in this lab must be run on each controller instance: `controller-0`, `controller-1`, and `controller-2`. Login to each controller instance using the `gcloud` command. Example:
+이번 실습 명령어는 각 Controller node에서 진행해야 합니다. 그래서 각 node에 ssh로 접속해서 진행합니다.
+Controller node: `k8s-controller-1`, `k8s-controller-2`, `k8s-controller-3`
 
 ```
-gcloud compute ssh controller-0
+ssh k8s-controller-1
 ```
 
 ### Running commands in parallel with tmux
 
-[tmux](https://github.com/tmux/tmux/wiki) can be used to run commands on multiple compute instances at the same time. See the [Running commands in parallel with tmux](01-prerequisites.md#running-commands-in-parallel-with-tmux) section in the Prerequisites lab.
+[tmux](https://github.com/tmux/tmux/wiki)를 사용하여 동시에 여러 node에 같은 명령어르 실행할 수 있습니다.  이 실습을 진행하기 전에 [Running commands in parallel with tmux](01-prerequisites.md#running-commands-in-parallel-with-tmux)를 보시면 좋습니다.
 
 ## Provision the Kubernetes Control Plane
 
-Create the Kubernetes configuration directory:
+kubernetes 디렉토리 생성:
 
 ```
 sudo mkdir -p /etc/kubernetes/config
@@ -24,17 +25,17 @@ sudo mkdir -p /etc/kubernetes/config
 
 ### Download and Install the Kubernetes Controller Binaries
 
-Download the official Kubernetes release binaries:
+Kubernetes 공식 바이너리 파일 다운로드:
 
 ```
 wget -q --show-progress --https-only --timestamping \
-  "https://storage.googleapis.com/kubernetes-release/release/v1.15.3/bin/linux/amd64/kube-apiserver" \
-  "https://storage.googleapis.com/kubernetes-release/release/v1.15.3/bin/linux/amd64/kube-controller-manager" \
-  "https://storage.googleapis.com/kubernetes-release/release/v1.15.3/bin/linux/amd64/kube-scheduler" \
-  "https://storage.googleapis.com/kubernetes-release/release/v1.15.3/bin/linux/amd64/kubectl"
+  "https://storage.googleapis.com/kubernetes-release/release/v1.18.6/bin/linux/amd64/kube-apiserver" \
+  "https://storage.googleapis.com/kubernetes-release/release/v1.18.6/bin/linux/amd64/kube-controller-manager" \
+  "https://storage.googleapis.com/kubernetes-release/release/v1.18.6/bin/linux/amd64/kube-scheduler" \
+  "https://storage.googleapis.com/kubernetes-release/release/v1.18.6/bin/linux/amd64/kubectl"
 ```
 
-Install the Kubernetes binaries:
+Kubernetes 설치:
 
 ```
 {
@@ -55,14 +56,13 @@ Install the Kubernetes binaries:
 }
 ```
 
-The instance internal IP address will be used to advertise the API Server to members of the cluster. Retrieve the internal IP address for the current compute instance:
+INTERNAL IP 주소는 API서버를 클러스터 멤버들에게 알리는데 사용됩니다. 
 
 ```
-INTERNAL_IP=$(curl -s -H "Metadata-Flavor: Google" \
-  http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/ip)
+INTERNAL_IP=$(grep "$(hostname)" /etc/hosts | awk '{print $1}')
 ```
 
-Create the `kube-apiserver.service` systemd unit file:
+`kube-apiserver.service` systemd 파일 생성:
 
 ```
 cat <<EOF | sudo tee /etc/systemd/system/kube-apiserver.service
@@ -86,14 +86,14 @@ ExecStart=/usr/local/bin/kube-apiserver \\
   --etcd-cafile=/var/lib/kubernetes/ca.pem \\
   --etcd-certfile=/var/lib/kubernetes/kubernetes.pem \\
   --etcd-keyfile=/var/lib/kubernetes/kubernetes-key.pem \\
-  --etcd-servers=https://10.240.0.10:2379,https://10.240.0.11:2379,https://10.240.0.12:2379 \\
+  --etcd-servers=https://10.240.0.11:2379,https://10.240.0.12:2379,https://10.240.0.13:2379 \\
   --event-ttl=1h \\
   --encryption-provider-config=/var/lib/kubernetes/encryption-config.yaml \\
   --kubelet-certificate-authority=/var/lib/kubernetes/ca.pem \\
   --kubelet-client-certificate=/var/lib/kubernetes/kubernetes.pem \\
   --kubelet-client-key=/var/lib/kubernetes/kubernetes-key.pem \\
   --kubelet-https=true \\
-  --runtime-config=api/all \\
+  --runtime-config=api/all=true \\
   --service-account-key-file=/var/lib/kubernetes/service-account.pem \\
   --service-cluster-ip-range=10.32.0.0/24 \\
   --service-node-port-range=30000-32767 \\
@@ -110,13 +110,13 @@ EOF
 
 ### Configure the Kubernetes Controller Manager
 
-Move the `kube-controller-manager` kubeconfig into place:
+`kube-controller-manage`의 kubeconfig를 이동합니다.
 
 ```
 sudo mv kube-controller-manager.kubeconfig /var/lib/kubernetes/
 ```
 
-Create the `kube-controller-manager.service` systemd unit file:
+`kube-controller-manager.service` systemd 파일 생성:
 
 ```
 cat <<EOF | sudo tee /etc/systemd/system/kube-controller-manager.service
@@ -148,13 +148,13 @@ EOF
 
 ### Configure the Kubernetes Scheduler
 
-Move the `kube-scheduler` kubeconfig into place:
+`kube-scheduler`의 kubeconfig를 이동합니다.
 
 ```
 sudo mv kube-scheduler.kubeconfig /var/lib/kubernetes/
 ```
 
-Create the `kube-scheduler.yaml` configuration file:
+`kube-scheduler.yaml` 파일을 생성:
 
 ```
 cat <<EOF | sudo tee /etc/kubernetes/config/kube-scheduler.yaml
@@ -167,7 +167,7 @@ leaderElection:
 EOF
 ```
 
-Create the `kube-scheduler.service` systemd unit file:
+`kube-scheduler.service` systemd 파일 생성:
 
 ```
 cat <<EOF | sudo tee /etc/systemd/system/kube-scheduler.service
@@ -197,51 +197,7 @@ EOF
 }
 ```
 
-> Allow up to 10 seconds for the Kubernetes API Server to fully initialize.
-
-### Enable HTTP Health Checks
-
-A [Google Network Load Balancer](https://cloud.google.com/compute/docs/load-balancing/network) will be used to distribute traffic across the three API servers and allow each API server to terminate TLS connections and validate client certificates. The network load balancer only supports HTTP health checks which means the HTTPS endpoint exposed by the API server cannot be used. As a workaround the nginx webserver can be used to proxy HTTP health checks. In this section nginx will be installed and configured to accept HTTP health checks on port `80` and proxy the connections to the API server on `https://127.0.0.1:6443/healthz`.
-
-> The `/healthz` API server endpoint does not require authentication by default.
-
-Install a basic web server to handle HTTP health checks:
-
-```
-sudo apt-get update
-sudo apt-get install -y nginx
-```
-
-```
-cat > kubernetes.default.svc.cluster.local <<EOF
-server {
-  listen      80;
-  server_name kubernetes.default.svc.cluster.local;
-
-  location /healthz {
-     proxy_pass                    https://127.0.0.1:6443/healthz;
-     proxy_ssl_trusted_certificate /var/lib/kubernetes/ca.pem;
-  }
-}
-EOF
-```
-
-```
-{
-  sudo mv kubernetes.default.svc.cluster.local \
-    /etc/nginx/sites-available/kubernetes.default.svc.cluster.local
-
-  sudo ln -s /etc/nginx/sites-available/kubernetes.default.svc.cluster.local /etc/nginx/sites-enabled/
-}
-```
-
-```
-sudo systemctl restart nginx
-```
-
-```
-sudo systemctl enable nginx
-```
+> 약 10초 정도 기다리면 Kubernetes API Server가 동작합니다.
 
 ### Verification
 
@@ -258,39 +214,22 @@ etcd-0               Healthy   {"health": "true"}
 etcd-1               Healthy   {"health": "true"}
 ```
 
-Test the nginx HTTP health check proxy:
-
-```
-curl -H "Host: kubernetes.default.svc.cluster.local" -i http://127.0.0.1/healthz
-```
-
-```
-HTTP/1.1 200 OK
-Server: nginx/1.14.0 (Ubuntu)
-Date: Sat, 14 Sep 2019 18:34:11 GMT
-Content-Type: text/plain; charset=utf-8
-Content-Length: 2
-Connection: keep-alive
-X-Content-Type-Options: nosniff
-
-ok
-```
-
-> Remember to run the above commands on each controller node: `controller-0`, `controller-1`, and `controller-2`.
+> 각 Controller node에서 실행을 해야 합니다. Controller node: `k8s-controller-1`, `k8s-controller-2`, `k8s-controller-3`
 
 ## RBAC for Kubelet Authorization
 
-In this section you will configure RBAC permissions to allow the Kubernetes API Server to access the Kubelet API on each worker node. Access to the Kubelet API is required for retrieving metrics, logs, and executing commands in pods.
+이번 실습은 각 worker node의 Kubelet API가 kubernetes API 서버에 접속을 허용하기 위한 RBAC 구성을 진행합니다. Metrics, logs를 검색하고 포드에 명령을 실행하려면 kubelet API에 대한 access 권한이 필요합니다.
 
-> This tutorial sets the Kubelet `--authorization-mode` flag to `Webhook`. Webhook mode uses the [SubjectAccessReview](https://kubernetes.io/docs/admin/authorization/#checking-api-access) API to determine authorization.
 
-The commands in this section will effect the entire cluster and only need to be run once from one of the controller nodes.
+> 이 튜토리얼은 kubelet `--authorization-mode` 옵션을 `webhook`으로 설정합니다. Webhook 모드는 [SubjectAccessReview](https://kubernetes.io/docs/admin/authorization/#checking-api-access) API를 사용하여 인증을 결정합니다.
+
+이번 섹션 명령어는 Controller node 중 한 곳에서 실행하여도 전체 클러스터에 영향을 미칩니다.
 
 ```
-gcloud compute ssh controller-0
+ ssh k8s-controller-1
 ```
 
-Create the `system:kube-apiserver-to-kubelet` [ClusterRole](https://kubernetes.io/docs/admin/authorization/rbac/#role-and-clusterrole) with permissions to access the Kubelet API and perform most common tasks associated with managing pods:
+Kubelet API에 access하고 포드 관리와 관련된 일반적인 대부분의 작업을 수행 할 권한이 있는 `system:kube-apiserver-to-kubelet` [ClusterRole](https://kubernetes.io/docs/admin/authorization/rbac/#role-and-clusterrole)을 만듭니다.  
 
 ```
 cat <<EOF | kubectl apply --kubeconfig admin.kubeconfig -f -
@@ -316,7 +255,7 @@ rules:
 EOF
 ```
 
-The Kubernetes API Server authenticates to the Kubelet as the `kubernetes` user using the client certificate as defined by the `--kubelet-client-certificate` flag.
+Kubernetes API Server는 `--kubelet-client-certificate`에 정의된 클라이언트 인증서를 사용하여 kubelet에 `kubernetes` 사용자 이름으로 인증합니다.
 
 Bind the `system:kube-apiserver-to-kubelet` ClusterRole to the `kubernetes` user:
 
@@ -340,45 +279,74 @@ EOF
 
 ## The Kubernetes Frontend Load Balancer
 
-In this section you will provision an external load balancer to front the Kubernetes API Servers. The `kubernetes-the-hard-way` static IP address will be attached to the resulting load balancer.
-
-> The compute instances created in this tutorial will not have permission to complete this section. **Run the following commands from the same machine used to create the compute instances**.
+이번 섹션은 Kubernetes API Server의 고가용성을 위해 `Keepalived` + `Haproxy`를 이용해서 endpoint에 사용되는 VIP 및 Load balancer를 설정하겠습니다.
 
 
-### Provision a Network Load Balancer
+### Install keepalived
 
+Download and Install keepalived
 Create the external load balancer network resources:
 
 ```
 {
-  KUBERNETES_PUBLIC_ADDRESS=$(gcloud compute addresses describe kubernetes-the-hard-way \
-    --region $(gcloud config get-value compute/region) \
-    --format 'value(address)')
 
-  gcloud compute http-health-checks create kubernetes \
-    --description "Kubernetes Health Check" \
-    --host "kubernetes.default.svc.cluster.local" \
-    --request-path "/healthz"
+  sudo dnf -y install openssl-devel libnl3-devel
 
-  gcloud compute firewall-rules create kubernetes-the-hard-way-allow-health-check \
-    --network kubernetes-the-hard-way \
-    --source-ranges 209.85.152.0/22,209.85.204.0/22,35.191.0.0/16 \
-    --allow tcp
+  wget -q --show-progress --https-only --timestamping \
+   https://www.keepalived.org/software/keepalived-2.2.1.tar.gz
+  
+  tar -xvf keepalived-2.2.1.tar.gz
 
-  gcloud compute target-pools create kubernetes-target-pool \
-    --http-health-check kubernetes
+  cd keepalived-2.2.1
+  ./configure --prefix=/usr/local/
+  sudo make && sudo make install
 
-  gcloud compute target-pools add-instances kubernetes-target-pool \
-   --instances controller-0,controller-1,controller-2
-
-  gcloud compute forwarding-rules create kubernetes-forwarding-rule \
-    --address ${KUBERNETES_PUBLIC_ADDRESS} \
-    --ports 6443 \
-    --region $(gcloud config get-value compute/region) \
-    --target-pool kubernetes-target-pool
+  sudo cp ./keepalived/keepalived /usr/sbin/
 }
 ```
 
+/etc/sysconfig/keepalibved을 생성합니다.
+
+```
+cat <<EOF | sudo tee /etc/sysconfig/keepalived
+# Options for keepalived. See 'keepalived --help' output and keepalived(8) and
+# keepalived.conf(5) man pages for a list of all options. Here are the most
+# common ones :
+#
+# --vrrp               -P    Only run with VRRP subsystem.
+# --check              -C    Only run with Health-checker subsystem.
+# --dont-release-vrrp  -V    Dont remove VRRP VIPs & VROUTEs on daemon stop.
+# --dont-release-ipvs  -I    Dont remove IPVS topology on daemon stop.
+# --dump-conf          -d    Dump the configuration data.
+# --log-detail         -D    Detailed log messages.
+# --log-facility       -S    0-7 Set local syslog facility (default=LOG_DAEMON)
+#
+
+KEEPALIVED_OPTIONS="-D -S 3 -f /etc/keepalived/keepalived.conf"
+EOF
+```
+
+keepalived 디렉토리 복사:
+
+```
+
+sudo cp -R ./keepalived/etc/keepalived /etc/keepalived
+
+```
+
+keepalived config 생성:
+
+```
+cat <<EOF | sudo tee /etc/keepalived/keepalived.conf
+
+
+
+https://github.com/acassen/keepalived/issues/1175
+
+sudo systemctl enable keepalived
+sudo systemctl start keepalived
+
+```
 ### Verification
 
 > The compute instances created in this tutorial will not have permission to complete this section. **Run the following commands from the same machine used to create the compute instances**.

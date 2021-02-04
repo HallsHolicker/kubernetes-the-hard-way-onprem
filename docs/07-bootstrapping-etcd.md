@@ -1,31 +1,33 @@
 # Bootstrapping the etcd Cluster
 
-Kubernetes components are stateless and store cluster state in [etcd](https://github.com/etcd-io/etcd). In this lab you will bootstrap a three node etcd cluster and configure it for high availability and secure remote access.
+Kubernetes 구성요소는 stateless하고 [etcd](https://github.com/etcd-io/etcd)에 클러스터 상태를 저장합니다. 이번 실습에서는 고가용성을 위해 3개의 노드에 etcd 클러스터를 부트스트랩 및 구성하고 보안 원격 접속을 설정합니다.
+
 
 ## Prerequisites
 
-The commands in this lab must be run on each controller instance: `controller-0`, `controller-1`, and `controller-2`. Login to each controller instance using the `gcloud` command. Example:
+이번 실습 명령어는 각 Controller node에서 진행해야 합니다. 그래서 각 node에 ssh로 접속해서 진행합니다.
+Controller node: `k8s-controller-1`, `k8s-controller-2`, `k8s-controller-3`
 
 ```
-gcloud compute ssh controller-0
+ssh k8s-controller-1
 ```
 
 ### Running commands in parallel with tmux
 
-[tmux](https://github.com/tmux/tmux/wiki) can be used to run commands on multiple compute instances at the same time. See the [Running commands in parallel with tmux](01-prerequisites.md#running-commands-in-parallel-with-tmux) section in the Prerequisites lab.
+[tmux](https://github.com/tmux/tmux/wiki)를 사용하여 동시에 여러 node에 같은 명령어르 실행할 수 있습니다.  이 실습을 진행하기 전에 [Running commands in parallel with tmux](01-prerequisites.md#running-commands-in-parallel-with-tmux)를 보시면 좋습니다.
 
 ## Bootstrapping an etcd Cluster Member
 
 ### Download and Install the etcd Binaries
 
-Download the official etcd release binaries from the [etcd](https://github.com/etcd-io/etcd) GitHub project:
+[etcd](https://github.com/etcd-io/etcd) 깃허브에서 공식 버전을 다운로드 합니다.
 
 ```
 wget -q --show-progress --https-only --timestamping \
   "https://github.com/etcd-io/etcd/releases/download/v3.4.0/etcd-v3.4.0-linux-amd64.tar.gz"
 ```
 
-Extract and install the `etcd` server and the `etcdctl` command line utility:
+압축을 풀고 `etcd` 서버와 `etcdctl` 명령어 유틸리티를 설치합니다.
 
 ```
 {
@@ -43,20 +45,19 @@ Extract and install the `etcd` server and the `etcdctl` command line utility:
 }
 ```
 
-The instance internal IP address will be used to serve client requests and communicate with etcd cluster peers. Retrieve the internal IP address for the current compute instance:
+클라이언트 요청을 처리하고 etcd 클러스터 피어와 통신하는데 사용하는 INTERNAL IP 정보를 설정합니다.
 
 ```
-INTERNAL_IP=$(curl -s -H "Metadata-Flavor: Google" \
-  http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/ip)
+INTERNAL_IP=$(grep "$(hostname)" /etc/hosts | awk '{print $1}')
 ```
 
-Each etcd member must have a unique name within an etcd cluster. Set the etcd name to match the hostname of the current compute instance:
+각 etcd 구성원은 etcd 클러스터 내에서 고유 한 이름을 가져야 합니다. 고유 한 이름은 현재 서버의 이름과 동일하게 설정합니다.
 
 ```
 ETCD_NAME=$(hostname -s)
 ```
 
-Create the `etcd.service` systemd unit file:
+`etcd.service` systemd unit file 생성:
 
 ```
 cat <<EOF | sudo tee /etc/systemd/system/etcd.service
@@ -81,7 +82,7 @@ ExecStart=/usr/local/bin/etcd \\
   --listen-client-urls https://${INTERNAL_IP}:2379,https://127.0.0.1:2379 \\
   --advertise-client-urls https://${INTERNAL_IP}:2379 \\
   --initial-cluster-token etcd-cluster-0 \\
-  --initial-cluster controller-0=https://10.240.0.10:2380,controller-1=https://10.240.0.11:2380,controller-2=https://10.240.0.12:2380 \\
+  --initial-cluster k8s-controller-1=https://10.240.0.11:2380,k8s-controller-2=https://10.240.0.12:2380,k8s-controller-3=https://10.240.0.13:2380 \\
   --initial-cluster-state new \\
   --data-dir=/var/lib/etcd
 Restart=on-failure
@@ -102,14 +103,15 @@ EOF
 }
 ```
 
-> Remember to run the above commands on each controller node: `controller-0`, `controller-1`, and `controller-2`.
+> 위의 명령어들은 각 controller node에서 실행해야 합니다. controller node : `k8s-controller-1`, `k8s-controller-2`, `k8s-controller-3`
 
 ## Verification
 
-List the etcd cluster members:
+etcd 클러스터 멤버 정보:
 
 ```
-sudo ETCDCTL_API=3 etcdctl member list \
+ETCDCTL_API=3
+sudo /usr/local/bin/etcdctl member list \
   --endpoints=https://127.0.0.1:2379 \
   --cacert=/etc/etcd/ca.pem \
   --cert=/etc/etcd/kubernetes.pem \
@@ -119,9 +121,9 @@ sudo ETCDCTL_API=3 etcdctl member list \
 > output
 
 ```
-3a57933972cb5131, started, controller-2, https://10.240.0.12:2380, https://10.240.0.12:2379
-f98dc20bce6225a0, started, controller-0, https://10.240.0.10:2380, https://10.240.0.10:2379
-ffed16798470cab5, started, controller-1, https://10.240.0.11:2380, https://10.240.0.11:2379
+2fe2f5d17fc97dab, started, k8s-controller-3, https://10.240.0.13:2380, https://10.240.0.13:2379, false
+3a57933972cb5131, started, k8s-controller-2, https://10.240.0.12:2380, https://10.240.0.12:2379, false
+ffed16798470cab5, started, k8s-controller-1, https://10.240.0.11:2380, https://10.240.0.11:2379, false
 ```
 
 Next: [Bootstrapping the Kubernetes Control Plane](08-bootstrapping-kubernetes-controllers.md)

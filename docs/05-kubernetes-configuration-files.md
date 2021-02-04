@@ -1,65 +1,59 @@
 # Generating Kubernetes Configuration Files for Authentication
 
-In this lab you will generate [Kubernetes configuration files](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/), also known as kubeconfigs, which enable Kubernetes clients to locate and authenticate to the Kubernetes API Servers.
+이번 실습에서는 kubeconfigs로 불리는 [Kubernetes configuration files](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/)를 생성하여, 클라이언트가 Kubernetes API Servers를 찾고 인증할 수 있도록 합니다.
 
 ## Client Authentication Configs
 
-In this section you will generate kubeconfig files for the `controller manager`, `kubelet`, `kube-proxy`, and `scheduler` clients and the `admin` user.
+이번 섹션에서는 `controller manager`, `kubelet`, `kube-proxy`, `scheduler`와 `admin`을 위한 kubeconfig 파일을 생성합니다.
 
 ### Kubernetes Public IP Address
 
-Each kubeconfig requires a Kubernetes API Server to connect to. To support high availability the IP address assigned to the external load balancer fronting the Kubernetes API Servers will be used.
-
-Retrieve the `kubernetes-the-hard-way` static IP address:
-
-```
-KUBERNETES_PUBLIC_ADDRESS=$(gcloud compute addresses describe kubernetes-the-hard-way \
-  --region $(gcloud config get-value compute/region) \
-  --format 'value(address)')
-```
+각 kubeconfig는 Kubernetes API Server와의 접속이 필요합니다. Kubernetes API Server를 사용함에 있어서 고가용성을 구성하기 위해 VIP (`Keepalived + Haproxy`)를 사용하였습니다.
+Keepalived와 Haproxy는 [Bootstrapping the Kubernetes Control Plane](08-bootstrapping-kubernetes-controllers.md)에서 다루겠습니다.
 
 ### The kubelet Kubernetes Configuration File
 
-When generating kubeconfig files for Kubelets the client certificate matching the Kubelet's node name must be used. This will ensure Kubelets are properly authorized by the Kubernetes [Node Authorizer](https://kubernetes.io/docs/admin/authorization/node/).
+Kubelet을 위한 kubeconfig 파일을 생성 할 때 kubelet의 노드 이름과 일치하는 클라이언트 인증서를 사용해야 합니다. 이렇게 하면 kubelet이 kubernetes [Node Authorizer](https://kubernetes.io/docs/admin/authorization/node/)에 의해 인증이 됩니다.
 
-> The following commands must be run in the same directory used to generate the SSL certificates during the [Generating TLS Certificates](04-certificate-authority.md) lab.
 
-Generate a kubeconfig file for each worker node:
+> 다음 명령어들은 SSL 인증서를 만들었던 실습인 [Generating TLS Certificates](04-certificate-authority.md)와 디렉토리와 같은 곳에서 실행하셔야 합니다.
+
+각 worker node의 kubeconfig file 생성:
 
 ```
-for instance in worker-0 worker-1 worker-2; do
+for hostname in k8s-worker-1 k8s-worker-2 k8s-worker-3; do
   kubectl config set-cluster kubernetes-the-hard-way \
     --certificate-authority=ca.pem \
     --embed-certs=true \
     --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 \
-    --kubeconfig=${instance}.kubeconfig
+    --kubeconfig=${hostname}.kubeconfig
 
-  kubectl config set-credentials system:node:${instance} \
-    --client-certificate=${instance}.pem \
-    --client-key=${instance}-key.pem \
+  kubectl config set-credentials system:node:${hostname} \
+    --client-certificate=${hostname}.pem \
+    --client-key=${hostname}-key.pem \
     --embed-certs=true \
-    --kubeconfig=${instance}.kubeconfig
+    --kubeconfig=${hostname}.kubeconfig
 
   kubectl config set-context default \
     --cluster=kubernetes-the-hard-way \
-    --user=system:node:${instance} \
-    --kubeconfig=${instance}.kubeconfig
+    --user=system:node:${hostname} \
+    --kubeconfig=${hostname}.kubeconfig
 
-  kubectl config use-context default --kubeconfig=${instance}.kubeconfig
+  kubectl config use-context default --kubeconfig=${hostname}.kubeconfig
 done
 ```
 
 Results:
 
 ```
-worker-0.kubeconfig
-worker-1.kubeconfig
-worker-2.kubeconfig
+k8s-worker-1.kubeconfig
+k8s-worker-2.kubeconfig
+k8s-worker-3.kubeconfig
 ```
 
 ### The kube-proxy Kubernetes Configuration File
 
-Generate a kubeconfig file for the `kube-proxy` service:
+`kube-proxy` 서비스를 위한 kubeconfig 파일 생성:
 
 ```
 {
@@ -92,7 +86,7 @@ kube-proxy.kubeconfig
 
 ### The kube-controller-manager Kubernetes Configuration File
 
-Generate a kubeconfig file for the `kube-controller-manager` service:
+`kube-controller-manager` 서비스를 위한 kubeconfig 파일 생성:
 
 ```
 {
@@ -126,7 +120,7 @@ kube-controller-manager.kubeconfig
 
 ### The kube-scheduler Kubernetes Configuration File
 
-Generate a kubeconfig file for the `kube-scheduler` service:
+`kube-scheduler` 서비스 kubeconfig 파일 생성:
 
 ```
 {
@@ -159,7 +153,7 @@ kube-scheduler.kubeconfig
 
 ### The admin Kubernetes Configuration File
 
-Generate a kubeconfig file for the `admin` user:
+`admin` 유저를 위한 kubeconfig 파일 생성:
 
 ```
 {
@@ -195,19 +189,18 @@ admin.kubeconfig
 
 ## Distribute the Kubernetes Configuration Files
 
-Copy the appropriate `kubelet` and `kube-proxy` kubeconfig files to each worker instance:
+각 worker node에 알맞는 `kubelet`와 `kube-proxy`의 kubeconfig 파일을 복사 합니다.
 
 ```
-for instance in worker-0 worker-1 worker-2; do
-  gcloud compute scp ${instance}.kubeconfig kube-proxy.kubeconfig ${instance}:~/
+for hostname in k8s-worker-1 k8s-worker-2 k8s-worker-3; do
+  scp ${hostname}.kubeconfig kube-proxy.kubeconfig ${hostname}:~/
 done
 ```
-
-Copy the appropriate `kube-controller-manager` and `kube-scheduler` kubeconfig files to each controller instance:
+각 Controller node에 알맞는 `kube-controller-manager`와 `kube-scheduler`의 kubeconfig 파일을 복사 합니다.
 
 ```
-for instance in controller-0 controller-1 controller-2; do
-  gcloud compute scp admin.kubeconfig kube-controller-manager.kubeconfig kube-scheduler.kubeconfig ${instance}:~/
+for hostname in k8s-controller-1 k8s-controller-2 k8s-controller-3; do
+  scp admin.kubeconfig kube-controller-manager.kubeconfig kube-scheduler.kubeconfig ${hostname}:~/
 done
 ```
 
