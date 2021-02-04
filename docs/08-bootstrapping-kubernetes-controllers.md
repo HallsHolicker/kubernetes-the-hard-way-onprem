@@ -280,105 +280,152 @@ EOF
 ## The Kubernetes Frontend Load Balancer
 
 이번 섹션은 Kubernetes API Server의 고가용성을 위해 `Keepalived` + `Haproxy`를 이용해서 endpoint에 사용되는 VIP 및 Load balancer를 설정하겠습니다.
+이번 실습은 Kubernetes Hardway를 진행하기 위한 방법이므로, `keepalived`와 `Haproxy`는 dnf를 이용해서 설치하도록 하겠습니다.
 
 
 ### Install keepalived
 
-Download and Install keepalived
-Create the external load balancer network resources:
-
-```
-{
-
-  sudo dnf -y install openssl-devel libnl3-devel
-
-  wget -q --show-progress --https-only --timestamping \
-   https://www.keepalived.org/software/keepalived-2.2.1.tar.gz
-  
-  tar -xvf keepalived-2.2.1.tar.gz
-
-  cd keepalived-2.2.1
-  ./configure --prefix=/usr/local/
-  sudo make && sudo make install
-
-  sudo cp ./keepalived/keepalived /usr/sbin/
-}
-```
-
-/etc/sysconfig/keepalibved을 생성합니다.
-
-```
-cat <<EOF | sudo tee /etc/sysconfig/keepalived
-# Options for keepalived. See 'keepalived --help' output and keepalived(8) and
-# keepalived.conf(5) man pages for a list of all options. Here are the most
-# common ones :
-#
-# --vrrp               -P    Only run with VRRP subsystem.
-# --check              -C    Only run with Health-checker subsystem.
-# --dont-release-vrrp  -V    Dont remove VRRP VIPs & VROUTEs on daemon stop.
-# --dont-release-ipvs  -I    Dont remove IPVS topology on daemon stop.
-# --dump-conf          -d    Dump the configuration data.
-# --log-detail         -D    Detailed log messages.
-# --log-facility       -S    0-7 Set local syslog facility (default=LOG_DAEMON)
-#
-
-KEEPALIVED_OPTIONS="-D -S 3 -f /etc/keepalived/keepalived.conf"
-EOF
-```
-
-keepalived 디렉토리 복사:
+Keepalived 설치:
 
 ```
 
-sudo cp -R ./keepalived/etc/keepalived /etc/keepalived
+sudo dnf -y install openssl-devel libnl3-devel keepalived
 
 ```
 
 keepalived config 생성:
 
 ```
+
 cat <<EOF | sudo tee /etc/keepalived/keepalived.conf
+global_defs {
+  router_id $(hostname)
+  vrrp_version 3
+}
 
+vrrp_script chk_haproxy {
+  script "/sbin/pidof haproxy"
+  interval 5
+  weight 2
+}
 
+vrrp_instance HAProxy {
+  interface enp0s8
+  state MASTER          # k8s-controller-2,3은 SLAVE로 설정
+  virtual_router_id 51
+  priority 101          # k8s-controller-2는 100, k8s-controller-3은 99으로 설정
+  advert_int 1
+  authentication {
+      auth_type PASS
+      auth_pass k8s-hardway
+  }
+  unicast_peer {
+    $(grep "k8s-controller-" /etc/hosts | grep -v "$(hostname)" | awk '{print $1}')
+  }
+  virtual_ipaddress {
+    $(grep "k8s-controller$" /etc/hosts | awk '{print $1}')
+  }
+  track_script{
+    chk_haproxy
+  }
+}
+EOF
+```
 
-https://github.com/acassen/keepalived/issues/1175
+### Verification keepalived
+
+keepalived 실행:
+
+```
 
 sudo systemctl enable keepalived
 sudo systemctl start keepalived
 
 ```
-### Verification
-
-> The compute instances created in this tutorial will not have permission to complete this section. **Run the following commands from the same machine used to create the compute instances**.
-
-Retrieve the `kubernetes-the-hard-way` static IP address:
+> 결과:
 
 ```
-KUBERNETES_PUBLIC_ADDRESS=$(gcloud compute addresses describe kubernetes-the-hard-way \
-  --region $(gcloud config get-value compute/region) \
-  --format 'value(address)')
+ip a show dev enp0s8
+
+3: enp0s8: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 08:00:27:95:0a:3d brd ff:ff:ff:ff:ff:ff
+    inet 10.240.0.11/24 brd 10.240.0.255 scope global noprefixroute enp0s8
+       valid_lft forever preferred_lft forever
+    inet 10.240.0.10/32 scope global enp0s8
+       valid_lft forever preferred_lft forever
+    inet6 fe80::a00:27ff:fe95:a3d/64 scope link
+       valid_lft forever preferred_lft forever
+```
+> 결과의 10.240.0.10은 `k8s-controller-1` 에만 보이게 됩니다.
+
+### Install Haproxy
+
+Haproxy 설치:
+
 ```
 
-Make a HTTP request for the Kubernetes version info:
+sudo dnf -y install make gcc gcc-c++ pcre-devel haproxy
 
 ```
-curl --cacert ca.pem https://${KUBERNETES_PUBLIC_ADDRESS}:6443/version
+
+### Setting Haproxy
+
+Haproxy config 설정:
+
+```
+cat <<EOF | sudo tee /etc/haproxy/haproxy.cfg
+global
+  daemon
+  user haproxy
+  group haproxy
+  master-worker
+  maxconn 10240
+  stats socket /var/run/haproxy.sock mode 660 level admin
+  stats timeout 60s
+
+  tune.ssl.default-dh-param 2048
+
+frontend k8s-contoller
+  bind 10.240.0.10:80
+  bind 127.0.0.1:80
+  mode http
+  option tcplog
+  default_backend k8s-controller
+
+backend k8s-controller
+  mode http
+  option tcp-check
+  balance roundrobin
+  default-server inter 10s downinter 5s rise 2 fall 2 slowstart 60s maxconn 250 maxqueue 256 weight 100
+  server k8s-controller-1 10.240.0.11:6443 check ssl verify none
+  server k8s-controller-2 10.240.0.12:6443 check ssl verify none
+  server k8s-controller-3 10.240.0.13:6443 check ssl verify none
+EOF
 ```
 
-> output
+Haproxy가 bind IP가 없어도 실행되도록 하기 위해 커널값을 수정:
 
 ```
-{
-  "major": "1",
-  "minor": "15",
-  "gitVersion": "v1.15.3",
-  "gitCommit": "2d3c76f9091b6bec110a5e63777c332469e0cba2",
-  "gitTreeState": "clean",
-  "buildDate": "2019-08-19T11:05:50Z",
-  "goVersion": "go1.12.9",
-  "compiler": "gc",
-  "platform": "linux/amd64"
-}
+
+sudo sysctl -w net.ipv4.ip_nonlocal_bind=1
+
 ```
+
+### Verification Haproxy
+
+Haproxy 정상 동작 확인
+
+```
+curl -H "Host: kubernetes.default.svc.cluster.local" -i http://127.0.0.1/healthz
+```
+```
+HTTP/1.1 200 OK
+Cache-Control: no-cache, private
+Content-Type: text/plain; charset=utf-8
+X-Content-Type-Options: nosniff
+Date: Thu, 04 Feb 2021 16:34:45 GMT
+Content-Length: 2
+```
+
 
 Next: [Bootstrapping the Kubernetes Worker Nodes](09-bootstrapping-kubernetes-workers.md)
