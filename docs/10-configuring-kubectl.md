@@ -1,20 +1,23 @@
 # Configuring kubectl for Remote Access
 
-In this lab you will generate a kubeconfig file for the `kubectl` command line utility based on the `admin` user credentials.
+이번 실습에서는 `admin` 자격 증명으로 `kubectl` 명령 유틸리티에 대한 kubeconfig 파일을 생성합니다.
 
-> Run the commands in this lab from the same directory used to generate the admin client certificates.
+> admin 클라이언트 인증서를 생성하는 디렉토리에서 명령을 실행합니다.
 
 ## The Admin Kubernetes Configuration File
 
-Each kubeconfig requires a Kubernetes API Server to connect to. To support high availability the IP address assigned to the external load balancer fronting the Kubernetes API Servers will be used.
+각 kubeconfig는 Kubernetes API 서버에 연결하기 위해 필요합니다. 고가용성을 지원하기 위해 Kubernetes API 서버 접속을 Haproxy에 설정된 VIP를 사용합니다.
 
-Generate a kubeconfig file suitable for authenticating as the `admin` user:
+
+`admin` 사용자로 인증하기에 적합한 kubeconfig 파일 생성:
+
+```
+ssh k8s-client
+````
 
 ```
 {
-  KUBERNETES_PUBLIC_ADDRESS=$(gcloud compute addresses describe kubernetes-the-hard-way \
-    --region $(gcloud config get-value compute/region) \
-    --format 'value(address)')
+  KUBERNETES_PUBLIC_ADDRESS=$(grep "k8s-controller$" /etc/hosts | awk '{print $1}')
 
   kubectl config set-cluster kubernetes-the-hard-way \
     --certificate-authority=ca.pem \
@@ -61,10 +64,10 @@ kubectl get nodes
 > output
 
 ```
-NAME       STATUS   ROLES    AGE    VERSION
-worker-0   Ready    <none>   2m9s   v1.15.3
-worker-1   Ready    <none>   2m9s   v1.15.3
-worker-2   Ready    <none>   2m9s   v1.15.3
+NAME           STATUS     ROLES    AGE   VERSION
+k8s-worker-1   NotReady   <none>   2m9s  v1.15.3
+k8s-worker-2   NotReady   <none>   2m9s  v1.15.3
+k8s-worker-3   NotReady   <none>   2m9s  v1.15.3
 ```
 
 Next: [Provisioning Pod Network Routes](11-pod-network-routes.md)
