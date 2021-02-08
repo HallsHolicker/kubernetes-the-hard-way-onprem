@@ -41,6 +41,7 @@ for hostname in k8s-worker-1 k8s-worker-2 k8s-worker-3; do
 
   kubectl config use-context default --kubeconfig=${hostname}.kubeconfig
 done
+
 ```
 
 Results:
@@ -75,6 +76,7 @@ k8s-worker-3.kubeconfig
     --kubeconfig=kube-proxy.kubeconfig
 
   kubectl config use-context default --kubeconfig=kube-proxy.kubeconfig
+
 }
 ```
 
@@ -108,6 +110,7 @@ kube-proxy.kubeconfig
     --kubeconfig=kube-controller-manager.kubeconfig
 
   kubectl config use-context default --kubeconfig=kube-controller-manager.kubeconfig
+
 }
 ```
 
@@ -142,6 +145,7 @@ kube-controller-manager.kubeconfig
     --kubeconfig=kube-scheduler.kubeconfig
 
   kubectl config use-context default --kubeconfig=kube-scheduler.kubeconfig
+
 }
 ```
 
@@ -160,7 +164,7 @@ kube-scheduler.kubeconfig
   kubectl config set-cluster kubernetes-the-hard-way \
     --certificate-authority=ca.pem \
     --embed-certs=true \
-    --server=https://127.0.0.1:6443 \
+    --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 \
     --kubeconfig=admin.kubeconfig
 
   kubectl config set-credentials admin \
@@ -175,6 +179,7 @@ kube-scheduler.kubeconfig
     --kubeconfig=admin.kubeconfig
 
   kubectl config use-context default --kubeconfig=admin.kubeconfig
+
 }
 ```
 
@@ -195,6 +200,7 @@ admin.kubeconfig
 for hostname in k8s-worker-1 k8s-worker-2 k8s-worker-3; do
   scp ${hostname}.kubeconfig kube-proxy.kubeconfig ${hostname}:~/
 done
+
 ```
 각 Controller node에 알맞는 `kube-controller-manager`와 `kube-scheduler`의 kubeconfig 파일을 복사 합니다.
 
@@ -202,6 +208,7 @@ done
 for hostname in k8s-controller-1 k8s-controller-2 k8s-controller-3; do
   scp admin.kubeconfig kube-controller-manager.kubeconfig kube-scheduler.kubeconfig ${hostname}:~/
 done
+
 ```
 
 Next: [Generating the Data Encryption Config and Key](06-data-encryption-keys.md)

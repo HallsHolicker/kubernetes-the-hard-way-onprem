@@ -139,15 +139,17 @@ cat > ${hostname}-csr.json <<EOF
 EOF
 
 INTERNAL_IP=$(grep "${hostname}" /etc/hosts | awk '{print $1}')
+EXTERNAL_IP=$(grep "k8s-controller$" /etc/hosts | awk '{print $1}')
 
 cfssl gencert \
   -ca=ca.pem \
   -ca-key=ca-key.pem \
   -config=ca-config.json \
-  -hostname=${hostname},${INTERNAL_IP} \
+  -hostname=${hostname},${INTERNAL_IP},${EXTERNAL_IP} \
   -profile=kubernetes \
   ${hostname}-csr.json | cfssljson -bare ${hostname}
 done
+
 ```
 
 Results:
@@ -167,7 +169,6 @@ Generate the `kube-controller-manager` client certificate and private key:
 
 ```
 {
-
 cat > kube-controller-manager-csr.json <<EOF
 {
   "CN": "system:kube-controller-manager",
@@ -400,6 +401,7 @@ service-account.pem
 for hostname in k8s-worker-1 k8s-worker-2 k8s-worker-3; do
   scp ca.pem ${hostname}-key.pem ${hostname}.pem ${hostname}:~/
 done
+
 ```
 
 각 Controller node에 certificate와 Private key를 복사합니다:
@@ -409,6 +411,7 @@ for hostname in k8s-controller-1 k8s-controller-2 k8s-controller-3; do
   scp ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem \
     service-account-key.pem service-account.pem ${hostname}:~/
 done
+
 ```
 
 > `kube-proxy`, `kube-controller-manager`, `kube-scheduler`, `kubelet` client certificates는 다음 실습에서 클라이언트 인증서 구성 파일을 생성하겠습니다.

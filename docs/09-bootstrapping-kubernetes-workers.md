@@ -1,6 +1,7 @@
 # Bootstrapping the Kubernetes Worker Nodes
 
-이번 실습은 Kubernete worker node들을 부트스트랩 하겠습니다. 각 노드에 다음 구성요소를 설치하겠습니다
+이번 실습은 Kubernete worker node들을 부트스트랩 하겠습니다. 각 노드에 다음 구성요소를 설치하겠습니다.
+CNI의 경우는 calico를 설치할 것이며, 설치는 [Provisioning Pod Network Routes](11-pod-network-routes.md)에서 진행하도록 하겠습니다.
 * [runc](https://github.com/opencontainers/runc)
 * [container networking plugins](https://github.com/containernetworking/cni)
 * [containerd](https://github.com/containerd/containerd)
@@ -27,6 +28,7 @@ ssh k8s-worker-1
 ```
 {
   sudo dnf -y install socat conntrack
+
 }
 ```
 
@@ -59,6 +61,7 @@ wget -q --show-progress --https-only --timestamping \
   https://storage.googleapis.com/kubernetes-release/release/v1.15.3/bin/linux/amd64/kubectl \
   https://storage.googleapis.com/kubernetes-release/release/v1.15.3/bin/linux/amd64/kube-proxy \
   https://storage.googleapis.com/kubernetes-release/release/v1.15.3/bin/linux/amd64/kubelet
+
 ```
 
 각 구성요소의 디렉토리 생성:
@@ -71,6 +74,7 @@ sudo mkdir -p \
   /var/lib/kube-proxy \
   /var/lib/kubernetes \
   /var/run/kubernetes
+
 ```
 
 각 구성요소 설치:
@@ -85,6 +89,7 @@ sudo mkdir -p \
   chmod +x crictl kubectl kube-proxy kubelet runc 
   sudo mv crictl kubectl kube-proxy kubelet runc /usr/local/bin/
   sudo mv containerd/bin/* /bin/
+
 }
 ```
 
@@ -94,6 +99,7 @@ sudo mkdir -p \
 
 ```
 sudo mkdir -p /etc/containerd/
+
 ```
 
 ```
@@ -106,6 +112,7 @@ cat << EOF | sudo tee /etc/containerd/config.toml
       runtime_engine = "/usr/local/bin/runc"
       runtime_root = ""
 EOF
+
 ```
 
 `containerd.service` systemd 파일 생성
@@ -132,6 +139,7 @@ LimitCORE=infinity
 [Install]
 WantedBy=multi-user.target
 EOF
+
 ```
 
 ### Configure the Kubelet
@@ -141,6 +149,7 @@ EOF
   sudo mv ${HOSTNAME}-key.pem ${HOSTNAME}.pem /var/lib/kubelet/
   sudo mv ${HOSTNAME}.kubeconfig /var/lib/kubelet/kubeconfig
   sudo mv ca.pem /var/lib/kubernetes/
+
 }
 ```
 
@@ -162,11 +171,11 @@ authorization:
 clusterDomain: "cluster.local"
 clusterDNS:
   - "10.32.0.10"
-resolvConf: "/run/systemd/resolve/resolv.conf"
 runtimeRequestTimeout: "15m"
 tlsCertFile: "/var/lib/kubelet/${HOSTNAME}.pem"
 tlsPrivateKeyFile: "/var/lib/kubelet/${HOSTNAME}-key.pem"
 EOF
+
 ```
 
 > `resolvConf` 구성은 `systemd-resolved`가 동작하는 시스템에서 service discovery를 위해 CoreDNS를 사용할 때 루프가 되는 것을 방지하기 위해 사용합니다.
@@ -197,12 +206,14 @@ RestartSec=5
 [Install]
 WantedBy=multi-user.target
 EOF
+
 ```
 
 ### Configure the Kubernetes Proxy
 
 ```
 sudo mv kube-proxy.kubeconfig /var/lib/kube-proxy/kubeconfig
+
 ```
 
 `kube-proxy-config.yaml` 구성 파일 생성:
@@ -216,6 +227,7 @@ clientConnection:
 mode: "iptables"
 clusterCIDR: "10.200.0.0/16"
 EOF
+
 ```
 
 `kube-proxy.service` systemd 파일 생성
@@ -235,6 +247,7 @@ RestartSec=5
 [Install]
 WantedBy=multi-user.target
 EOF
+
 ```
 
 ### Start the Worker Services
@@ -244,6 +257,7 @@ EOF
   sudo systemctl daemon-reload
   sudo systemctl enable containerd kubelet kube-proxy
   sudo systemctl start containerd kubelet kube-proxy
+
 }
 ```
 
@@ -254,8 +268,8 @@ EOF
 Kubernetes nodes 등록 상태 확인:
 
 ```
-ssh k8s-controller-1 \
-  --command "kubectl get nodes --kubeconfig admin.kubeconfig"
+  ssh k8s-client
+  kubectl get nodes --kubeconfig admin.kubeconfig
 ```
 
 > output
