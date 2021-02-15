@@ -10,7 +10,7 @@ Kubernetes는 control plane과 Container가 실행되는 Worker node를 호스�
 3개의 Control Plane Node와 3개의 Worker Node를 생성하겠습니다.
 
 ```
-cat > vagrantfile << EOF
+cat << EOF > vagrantfile
 Vagrant.configure("2") do |config|
   config.vm.box = "hallsholicker/centos8-stream-k8s"
 
@@ -63,14 +63,12 @@ K8S 설정 작업은 `k8s-client`에서 진행을 할 예정이며, 원활한 �
 ```
 vagrant ssh k8s-client
 sudo dnf -y install expect
-
 ```
 
 SSH를 접속할 때 패스워드를 입력하지 않고 접속하기 위해 SSH Key를 만듭니다.
 
 ```
 ssh-keygen
-
 ```
 
 > output
@@ -138,12 +136,10 @@ echo ""
 echo "Regist hostname to /etc/hosts end!"
 
 EOF
-
 ```
 
 ```
 sudo sh Setting_hosts.sh
-
 ```
 
 이제 만들어진 SSH Key 중 Public Key를 k8s-controller 3대, k8s-worker 3대에 복사 및 hostname, /etc/hosts를 설정하겠습니다.
@@ -178,7 +174,6 @@ echo ""
 echo "Set hostname end!"
 
 EOF
-
 ```
 
 ```
@@ -230,12 +225,10 @@ done
 echo "Script END!"
 
 EOF
-
 ```
 
 ```
 sh SSH-key-copy.sh
-
 ```
 
 Next: [Installing the Client Tools](03-client-tools.md)

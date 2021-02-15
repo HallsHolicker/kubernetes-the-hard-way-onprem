@@ -10,7 +10,6 @@ Kubernetes는 클러스터 상태, 어플리케이션 구성, Secret등의 데�
 
 ```
 ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64)
-
 ```
 
 ## The Encryption Config File
@@ -31,7 +30,6 @@ resources:
               secret: ${ENCRYPTION_KEY}
       - identity: {}
 EOF
-
 ```
 
 각 Controller node에 암호화 config인 `encryption-config.yaml`을 복사 합니다.
@@ -40,7 +38,6 @@ EOF
 for hostname in k8s-controller-1 k8s-controller-2 k8s-controller-3; do
   scp encryption-config.yaml ${hostname}:~/
 done
-
 ```
 
 Next: [Bootstrapping the etcd Cluster](07-bootstrapping-etcd.md)

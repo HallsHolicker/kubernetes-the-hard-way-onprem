@@ -25,7 +25,6 @@ ssh k8s-controller-1
 ```
 wget -q --show-progress --https-only --timestamping \
   "https://github.com/etcd-io/etcd/releases/download/v3.4.0/etcd-v3.4.0-linux-amd64.tar.gz"
-
 ```
 
 압축을 풀고 `etcd` 서버와 `etcdctl` 명령어 유틸리티를 설치합니다.
@@ -34,7 +33,6 @@ wget -q --show-progress --https-only --timestamping \
 {
   tar -xvf etcd-v3.4.0-linux-amd64.tar.gz
   sudo mv etcd-v3.4.0-linux-amd64/etcd* /usr/local/bin/
-
 }
 ```
 
@@ -44,7 +42,6 @@ wget -q --show-progress --https-only --timestamping \
 {
   sudo mkdir -p /etc/etcd /var/lib/etcd
   sudo cp ca.pem kubernetes-key.pem kubernetes.pem /etc/etcd/
-
 }
 ```
 
@@ -52,14 +49,12 @@ wget -q --show-progress --https-only --timestamping \
 
 ```
 INTERNAL_IP=$(grep "$(hostname)" /etc/hosts | awk '{print $1}')
-
 ```
 
 각 etcd 구성원은 etcd 클러스터 내에서 고유 한 이름을 가져야 합니다. 고유 한 이름은 현재 서버의 이름과 동일하게 설정합니다.
 
 ```
 ETCD_NAME=$(hostname -s)
-
 ```
 
 `etcd.service` systemd unit file 생성:
@@ -96,7 +91,6 @@ RestartSec=5
 [Install]
 WantedBy=multi-user.target
 EOF
-
 ```
 
 ### Start the etcd Server
@@ -106,7 +100,6 @@ EOF
   sudo systemctl daemon-reload
   sudo systemctl enable etcd
   sudo systemctl start etcd
-
 }
 ```
 
@@ -123,7 +116,6 @@ sudo /usr/local/bin/etcdctl member list \
   --cacert=/etc/etcd/ca.pem \
   --cert=/etc/etcd/kubernetes.pem \
   --key=/etc/etcd/kubernetes-key.pem
-  
 ```
 
 > output

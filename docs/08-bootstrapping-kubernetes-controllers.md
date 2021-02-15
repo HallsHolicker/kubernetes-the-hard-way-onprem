@@ -26,9 +26,7 @@ Kubernetes Hardway를 진행하기 위한 방법이므로, `keepalived`와 `Hapr
 Keepalived 설치:
 
 ```
-
 sudo dnf -y install openssl-devel libnl3-devel keepalived
-
 ```
 
 keepalived config 생성:
@@ -67,7 +65,6 @@ vrrp_instance HAProxy {
   }
 }
 EOF
-
 ```
 
 ### Verification keepalived
@@ -77,13 +74,14 @@ keepalived 실행:
 ```
 sudo systemctl enable keepalived
 sudo systemctl start keepalived
-
 ```
-> 결과:
+> output
 
 ```
 ip a show dev enp0s8
+```
 
+```
 3: enp0s8: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
     link/ether 08:00:27:95:0a:3d brd ff:ff:ff:ff:ff:ff
     inet 10.240.0.11/24 brd 10.240.0.255 scope global noprefixroute enp0s8
@@ -101,7 +99,6 @@ Haproxy 설치:
 
 ```
 sudo dnf -y install make gcc gcc-c++ pcre-devel haproxy
-
 ```
 
 ### Setting Haproxy
@@ -137,14 +134,12 @@ backend k8s-controller
   server k8s-controller-2 10.240.0.12:6443 check ssl verify none
   server k8s-controller-3 10.240.0.13:6443 check ssl verify none
 EOF
-
 ```
 
 Haproxy가 bind IP가 없어도 실행되도록 하기 위해 커널값을 수정:
 
 ```
 sudo sysctl -w net.ipv4.ip_nonlocal_bind=1
-
 ```
 
 Haproxy 실행:
@@ -152,7 +147,6 @@ Haproxy 실행:
 ```
 sudo systemctl enable haproxy
 sudo systemctl start haproxy
-
 ```
 
 ### Verification Haproxy
@@ -162,6 +156,7 @@ Haproxy 정상 동작 확인
 ```
 curl -H "Host: kubernetes.default.svc.cluster.local" -i http://127.0.0.1/healthz
 ```
+
 ```
 HTTP/1.1 200 OK
 Cache-Control: no-cache, private
@@ -178,7 +173,6 @@ kubernetes 디렉토리 생성:
 
 ```
 sudo mkdir -p /etc/kubernetes/config
-
 ```
 
 ### Download and Install the Kubernetes Controller Binaries
@@ -191,7 +185,6 @@ wget -q --show-progress --https-only --timestamping \
   "https://storage.googleapis.com/kubernetes-release/release/v1.18.6/bin/linux/amd64/kube-controller-manager" \
   "https://storage.googleapis.com/kubernetes-release/release/v1.18.6/bin/linux/amd64/kube-scheduler" \
   "https://storage.googleapis.com/kubernetes-release/release/v1.18.6/bin/linux/amd64/kubectl"
-
 ```
 
 Kubernetes 설치:
@@ -200,7 +193,6 @@ Kubernetes 설치:
 {
   chmod +x kube-apiserver kube-controller-manager kube-scheduler kubectl
   sudo mv kube-apiserver kube-controller-manager kube-scheduler kubectl /usr/local/bin/
-
 }
 ```
 
@@ -213,7 +205,6 @@ Kubernetes 설치:
   sudo mv ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem \
     service-account-key.pem service-account.pem \
     encryption-config.yaml /var/lib/kubernetes/
-
 }
 ```
 
@@ -221,7 +212,6 @@ INTERNAL IP 주소는 API서버를 클러스터 멤버들에게 알리는데 사
 
 ```
 INTERNAL_IP=$(grep "$(hostname)" /etc/hosts | awk '{print $1}')
-
 ```
 
 `kube-apiserver.service` systemd 파일 생성:
@@ -268,7 +258,6 @@ RestartSec=5
 [Install]
 WantedBy=multi-user.target
 EOF
-
 ```
 
 ### Configure the Kubernetes Controller Manager
@@ -277,7 +266,6 @@ EOF
 
 ```
 sudo mv kube-controller-manager.kubeconfig /var/lib/kubernetes/
-
 ```
 
 `kube-controller-manager.service` systemd 파일 생성:
@@ -308,7 +296,6 @@ RestartSec=5
 [Install]
 WantedBy=multi-user.target
 EOF
-
 ```
 
 ### Configure the Kubernetes Scheduler
@@ -317,7 +304,6 @@ EOF
 
 ```
 sudo mv kube-scheduler.kubeconfig /var/lib/kubernetes/
-
 ```
 
 `kube-scheduler.yaml` 파일을 생성:
@@ -331,7 +317,6 @@ clientConnection:
 leaderElection:
   leaderElect: true
 EOF
-
 ```
 
 `kube-scheduler.service` systemd 파일 생성:
@@ -352,7 +337,6 @@ RestartSec=5
 [Install]
 WantedBy=multi-user.target
 EOF
-
 ```
 
 ### Start the Controller Services
@@ -397,8 +381,7 @@ etcd-1               Healthy   {"health": "true"}
 이번 섹션 명령어는 Controller node 중 한 곳에서 실행하여도 전체 클러스터에 영향을 미칩니다.
 
 ```
- ssh k8s-controller-1
-
+ssh k8s-controller-1
 ```
 
 Kubelet API에 access하고 포드 관리와 관련된 일반적인 대부분의 작업을 수행 할 권한이 있는 `system:kube-apiserver-to-kubelet` [ClusterRole](https://kubernetes.io/docs/admin/authorization/rbac/#role-and-clusterrole)을 만듭니다.  
@@ -425,7 +408,6 @@ rules:
     verbs:
       - "*"
 EOF
-
 ```
 
 Kubernetes API Server는 `--kubelet-client-certificate`에 정의된 클라이언트 인증서를 사용하여 kubelet에 `kubernetes` 사용자 이름으로 인증합니다.
@@ -448,7 +430,6 @@ subjects:
     kind: User
     name: kubernetes
 EOF
-
 ```
 
 Next: [Bootstrapping the Kubernetes Worker Nodes](09-bootstrapping-kubernetes-workers.md)

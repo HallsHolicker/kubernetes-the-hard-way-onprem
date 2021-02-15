@@ -1,10 +1,11 @@
 # Deploying the DNS Cluster Add-on
 
-In this lab you will deploy the [DNS add-on](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/) which provides DNS based service discovery, backed by [CoreDNS](https://coredns.io/), to applications running inside the Kubernetes cluster.
+이번 실습에서는 Kubernetes cluster안에서 실행되는 어플리케이션들에 대해서, [CoreDNS](https://coredns.io/)를 이용한 DNS 기반 service discovery를 하는 [DNS add-on](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)을 배포하겠습니다.
 
 ## The DNS Cluster Add-on
 
-Deploy the `coredns` cluster add-on:
+
+`coredns` add-on 배포:
 
 ```
 kubectl apply -f https://storage.googleapis.com/kubernetes-the-hard-way/coredns.yaml
@@ -21,7 +22,7 @@ deployment.extensions/coredns created
 service/kube-dns created
 ```
 
-List the pods created by the `kube-dns` deployment:
+`kube-dns` deployment로 생성된 pods 리스트 확인:
 
 ```
 kubectl get pods -l k8s-app=kube-dns -n kube-system
@@ -37,13 +38,13 @@ coredns-699f8ddd77-gtcgb   1/1     Running   0          20s
 
 ## Verification
 
-Create a `busybox` deployment:
+`busybox` deployment 생성:
 
 ```
 kubectl run --generator=run-pod/v1 busybox --image=busybox:1.28 --command -- sleep 3600
 ```
 
-List the pod created by the `busybox` deployment:
+`busybox` deployment로 생성된 pod 리스트 확인:
 
 ```
 kubectl get pods -l run=busybox
@@ -56,13 +57,13 @@ NAME      READY   STATUS    RESTARTS   AGE
 busybox   1/1     Running   0          3s
 ```
 
-Retrieve the full name of the `busybox` pod:
+`busybox` pod의 full name 확인:
 
 ```
 POD_NAME=$(kubectl get pods -l run=busybox -o jsonpath="{.items[0].metadata.name}")
 ```
 
-Execute a DNS lookup for the `kubernetes` service inside the `busybox` pod:
+`kubernetes` service에서 `busybox` pod의 DNS lookup 실행:
 
 ```
 kubectl exec -ti $POD_NAME -- nslookup kubernetes

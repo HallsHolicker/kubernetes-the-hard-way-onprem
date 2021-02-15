@@ -15,7 +15,6 @@
 CA 설정 파일, 인증서, 개인키를 생성합니다.
 ```
 {
-
 cat > ca-config.json <<EOF
 {
   "signing": {
@@ -52,7 +51,6 @@ cat > ca-csr.json <<EOF
 EOF
 
 cfssl gencert -initca ca-csr.json | cfssljson -bare ca
-
 }
 ```
 
@@ -73,7 +71,6 @@ ca.pem
 
 ```
 {
-
 cat > admin-csr.json <<EOF
 {
   "CN": "admin",
@@ -99,7 +96,6 @@ cfssl gencert \
   -config=ca-config.json \
   -profile=kubernetes \
   admin-csr.json | cfssljson -bare admin
-
 }
 ```
 
@@ -149,7 +145,6 @@ cfssl gencert \
   -profile=kubernetes \
   ${hostname}-csr.json | cfssljson -bare ${hostname}
 done
-
 ```
 
 Results:
@@ -194,7 +189,6 @@ cfssl gencert \
   -config=ca-config.json \
   -profile=kubernetes \
   kube-controller-manager-csr.json | cfssljson -bare kube-controller-manager
-
 }
 ```
 
@@ -212,7 +206,6 @@ Generate the `kube-proxy` client certificate and private key:
 
 ```
 {
-
 cat > kube-proxy-csr.json <<EOF
 {
   "CN": "system:kube-proxy",
@@ -238,7 +231,6 @@ cfssl gencert \
   -config=ca-config.json \
   -profile=kubernetes \
   kube-proxy-csr.json | cfssljson -bare kube-proxy
-
 }
 ```
 
@@ -255,7 +247,6 @@ Generate the `kube-scheduler` client certificate and private key:
 
 ```
 {
-
 cat > kube-scheduler-csr.json <<EOF
 {
   "CN": "system:kube-scheduler",
@@ -281,7 +272,6 @@ cfssl gencert \
   -config=ca-config.json \
   -profile=kubernetes \
   kube-scheduler-csr.json | cfssljson -bare kube-scheduler
-
 }
 ```
 
@@ -301,11 +291,8 @@ Generate the Kubernetes API Server certificate and private key:
 
 ```
 {
-
 KUBERNETES_PUBLIC_ADDRESS=$(grep "k8s-controller$" /etc/hosts | awk '{print $1}')
-
 KUBERNETES_CLIENT_ADDRESS=$(grep "k8s-client" /etc/hosts | awk '{print $1}')
-
 KUBERNETES_HOSTNAMES=kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.svc.cluster.local
 
 cat > kubernetes-csr.json <<EOF
@@ -334,7 +321,6 @@ cfssl gencert \
   -hostname=10.32.0.1,10.240.0.10,10.240.0.11,10.240.0.12,10.240.0.13,${KUBERNETES_PUBLIC_ADDRESS},127.0.0.1,${KUBERNETES_HOSTNAMES},${KUBERNETES_CLIENT_ADDRESS} \
   -profile=kubernetes \
   kubernetes-csr.json | cfssljson -bare kubernetes
-
 }
 ```
 
@@ -381,7 +367,6 @@ cfssl gencert \
   -config=ca-config.json \
   -profile=kubernetes \
   service-account-csr.json | cfssljson -bare service-account
-
 }
 ```
 
@@ -401,7 +386,6 @@ service-account.pem
 for hostname in k8s-worker-1 k8s-worker-2 k8s-worker-3; do
   scp ca.pem ${hostname}-key.pem ${hostname}.pem ${hostname}:~/
 done
-
 ```
 
 각 Controller node에 certificate와 Private key를 복사합니다:
@@ -411,7 +395,6 @@ for hostname in k8s-controller-1 k8s-controller-2 k8s-controller-3; do
   scp ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem \
     service-account-key.pem service-account.pem ${hostname}:~/
 done
-
 ```
 
 > `kube-proxy`, `kube-controller-manager`, `kube-scheduler`, `kubelet` client certificates는 다음 실습에서 클라이언트 인증서 구성 파일을 생성하겠습니다.
