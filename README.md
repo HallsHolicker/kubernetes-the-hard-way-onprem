@@ -32,8 +32,8 @@
 테스트는 On-premise와 비슷하게 테스트하기 위해 가상머신에서 테스트를 진행하며, 가상머신은 Virtualbox를 사용하였습니다.
 
 * [Prerequisites](docs/01-prerequisites.md)
-* [Installing the Client Tools](docs/02-compute-resources.md)
-* [Provisioning Compute Resources](docs/03-client-tools.md)
+* [Provisioning Compute Resources](docs/02-compute-resources.md)
+* [Installing the Client Tools](docs/03-client-tools.md)
 * [Provisioning the CA and Generating TLS Certificates](docs/04-certificate-authority.md)
 * [Generating Kubernetes Configuration Files for Authentication](docs/05-kubernetes-configuration-files.md)
 * [Generating the Data Encryption Config and Key](docs/06-data-encryption-keys.md)

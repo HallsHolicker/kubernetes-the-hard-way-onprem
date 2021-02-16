@@ -23,11 +23,7 @@ kubectl apply -f calico.yaml
 
 ## Verification Calico
 
-Calico가 잘 동작 되는지 확인합니다.
-
-```
-ssh k8s-client
-```
+Calico가 정상 동작하기까지는 약 1분 정도 소요됩니다.
 
 ```
 kubectl get pods -n kube-system
@@ -90,10 +86,6 @@ EOF
 ## Verification MetalLB
 
 MetalLB 설치가 잘 동작 되는 지 확인 합니다.
-
-```
-ssh k8s-client
-```
 
 ```
 kubectl get pods -n metallb-system

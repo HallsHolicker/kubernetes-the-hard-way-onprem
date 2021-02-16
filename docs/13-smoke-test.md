@@ -217,7 +217,7 @@ kubectl delete svc nginx
 kubectl expose deployment nginx --port 80 --type LoadBalancer
 ```
 
-External IP 및 MetalLB Node 확인:
+External IP 확인:
 
 ```
 EXTERNAL_IP=$(kubectl get svc nginx --output=jsonpath='{.status.loadBalancer.ingress[0].ip}')
