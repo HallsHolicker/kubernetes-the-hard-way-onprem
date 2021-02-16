@@ -31,7 +31,7 @@ wget -q --show-progress --https-only --timestamping \
 
 ```
 {
-  tar -xvf etcd-v3.4.0-linux-amd64.tar.gz
+  sudo tar -xvf etcd-v3.4.0-linux-amd64.tar.gz
   sudo mv etcd-v3.4.0-linux-amd64/etcd* /usr/local/bin/
 }
 ```

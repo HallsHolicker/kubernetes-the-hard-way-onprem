@@ -8,6 +8,10 @@
 `coredns` add-on 배포:
 
 ```
+ssh k8s-client
+```
+
+```
 kubectl apply -f https://storage.googleapis.com/kubernetes-the-hard-way/coredns.yaml
 ```
 

@@ -18,7 +18,7 @@ ssh k8s-controller-1
 ## The Kubernetes Frontend Load Balancer
 
 이번 섹션은 Kubernetes API Server의 고가용성을 위해 `Keepalived` + `Haproxy`를 이용해서 endpoint에 사용되는 VIP 및 Load balancer를 설정하겠습니다.
-Kubernetes Hardway를 진행하기 위한 방법이므로, `keepalived`와 `Haproxy`를 소스 설치가 아닌  dnf를 이용해서 설치하도록 하겠습니다.
+Kubernetes Hardway를 진행하기 위한 방법이므로, `keepalived`와 `Haproxy`를 소스 설치가 아닌 dnf를 이용해서 설치하도록 하겠습니다.
 
 
 ### Install keepalived
@@ -46,9 +46,9 @@ vrrp_script chk_haproxy {
 
 vrrp_instance HAProxy {
   interface enp0s8
-  state MASTER          # k8s-controller-2,3은 SLAVE로 설정
+  $(if [ "$(hostname)" = "k8s-controller-1" ]; then echo "state MASTER"; else echo "state SLAVE"; fi)
   virtual_router_id 51
-  priority 101          # k8s-controller-2는 100, k8s-controller-3은 99으로 설정
+  $(if [ "$(hostname)" = "k8s-controller-1" ]; then echo "priority 101"; elif [ "$(hostname)" = "k8s-controller-2" ]; then echo "priority 100"; else echo "priority 99"; fi)
   advert_int 1
   authentication {
       auth_type PASS
@@ -91,7 +91,7 @@ ip a show dev enp0s8
     inet6 fe80::a00:27ff:fe95:a3d/64 scope link
        valid_lft forever preferred_lft forever
 ```
-> 결과의 10.240.0.10은 `k8s-controller-1` 에만 보이게 됩니다.
+> output의 10.240.0.10은 `k8s-controller-1` 에만 보이게 됩니다.
 
 ### Install Haproxy
 
@@ -157,13 +157,17 @@ Haproxy 정상 동작 확인
 curl -H "Host: kubernetes.default.svc.cluster.local" -i http://127.0.0.1/healthz
 ```
 
+아직 kubernetes API server를 실행하지 않았기에 503 에러가 나옵니다. Kubernetes API Server까지 설정을 완료하고 다시 확인을 하도록 하겠습니다.
+
 ```
-HTTP/1.1 200 OK
-Cache-Control: no-cache, private
-Content-Type: text/plain; charset=utf-8
-X-Content-Type-Options: nosniff
-Date: Thu, 04 Feb 2021 16:34:45 GMT
-Content-Length: 2
+HTTP/1.0 503 Service Unavailable
+Cache-Control: no-cache
+Connection: close
+Content-Type: text/html
+
+<html><body><h1>503 Service Unavailable</h1>
+No server is available to handle this request.
+</body></html>
 ```
 
 
@@ -369,6 +373,24 @@ etcd-1               Healthy   {"health": "true"}
 > 각 Controller node에서 실행을 해야 합니다. Controller node: `k8s-controller-1`, `k8s-controller-2`, `k8s-controller-3`
 
 
+Haproxy 정상 동작 확인
+
+```
+curl -H "Host: kubernetes.default.svc.cluster.local" -i http://127.0.0.1/healthz
+```
+
+아직 kubernetes API server를 실행하지 않았기에 503 에러가 나옵니다. Kubernetes API Server까지 설정을 완료하고 다시 확인을 하도록 하겠습니다.
+
+```
+HTTP/1.0 503 Service Unavailable
+Cache-Control: no-cache
+Connection: close
+Content-Type: text/html
+
+<html><body><h1>503 Service Unavailable</h1>
+No server is available to handle this request.
+</body></html>
+```
 
 
 ## RBAC for Kubelet Authorization
@@ -412,7 +434,7 @@ EOF
 
 Kubernetes API Server는 `--kubelet-client-certificate`에 정의된 클라이언트 인증서를 사용하여 kubelet에 `kubernetes` 사용자 이름으로 인증합니다.
 
-Bind the `system:kube-apiserver-to-kubelet` ClusterRole to the `kubernetes` user:
+`kubernetes` 유저에 `system:kube-apiserver-to-kubelet` ClusterRole을 연동:
 
 ```
 cat <<EOF | kubectl apply --kubeconfig admin.kubeconfig -f -

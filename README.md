@@ -7,7 +7,11 @@
 라이센스는 원작자의 라이센스를 그대로 따릅니다.
 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
 
-# Differences from kubernetes-the-hard-way by Kelsey Hightower 
+## Architecture
+
+![architecture](docs/images/kubernetes_hardway.png "architecture")
+
+## Differences from kubernetes-the-hard-way by Kelsey Hightower 
 
 * CNI는 Calico를 사용하였습니다.
 * On-premise의 환경에서 사용하는 LB로는 MetalLB로 구현하였습니다.

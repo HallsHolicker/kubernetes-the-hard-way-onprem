@@ -160,7 +160,7 @@ k8s-worker-3.pem
 
 ### The Controller Manager Client Certificate
 
-Generate the `kube-controller-manager` client certificate and private key:
+`kube-controller-manager` 클라이언트 인증서와 개인키 생성:
 
 ```
 {
@@ -202,7 +202,7 @@ kube-controller-manager.pem
 
 ### The Kube Proxy Client Certificate
 
-Generate the `kube-proxy` client certificate and private key:
+`kube-proxy` 클라이언트 인증서와 개인키 생성:
 
 ```
 {
@@ -243,7 +243,7 @@ kube-proxy.pem
 
 ### The Scheduler Client Certificate
 
-Generate the `kube-scheduler` client certificate and private key:
+`kube-scheduler` 클라이언트 인증서와 개인키 생성:
 
 ```
 {
@@ -287,7 +287,7 @@ kube-scheduler.pem
 
 원격 클라이언트의 유효성을 인증하기 위해 Kubernetes API 서버 인증서에 Client IP, kubernetes API VIP 정보를 포함합니다.
 
-Generate the Kubernetes API Server certificate and private key:
+Kubernetes API 서버 인증서와 개인키 생성:
 
 ```
 {
@@ -337,11 +337,10 @@ kubernetes.pem
 
 Kubernetes Controller Manager는 [managing service accounts](https://kubernetes.io/docs/admin/service-accounts-admin/) 문서에서 설명하듯이 키쌍을 사용하여, 서비스 계정 토큰을 생성하고 서명합니다.
 
-Generate the `service-account` certificate and private key:
+`service-account` 인증서와 개인키 생성:
 
 ```
 {
-
 cat > service-account-csr.json <<EOF
 {
   "CN": "service-accounts",

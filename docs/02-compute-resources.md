@@ -143,6 +143,7 @@ sudo sh Setting_hosts.sh
 ```
 
 이제 만들어진 SSH Key 중 Public Key를 k8s-controller 3대, k8s-worker 3대에 복사 및 hostname, /etc/hosts를 설정하겠습니다.
+expert 실행 시에 딜레이가 발생하므로 실행시키고 조금 기다려야 합니다.
 
 ```
 cat <<EOF | sudo tee ./Setting_hostname.sh
@@ -206,7 +207,7 @@ EOL
 
   echo "\${key} SSH Public Key Copy end!"
   echo ""
-  echo "Setting hostname & hosts Start!"
+  echo "\${key} Setting hostname & hosts Start!"
 
   scp /home/vagrant/Setting_hosts.sh \${key}:/home/vagrant
   scp /home/vagrant/Setting_hostname.sh \${key}:/home/vagrant
@@ -218,10 +219,12 @@ EOL
   expect eof
 EOL
 
-  echo "Setting hostname & hosts end!"
+  echo "\${key} Setting hostname & hosts end!"
 sleep 1
 done
 
+echo ""
+echo ""
 echo "Script END!"
 
 EOF
