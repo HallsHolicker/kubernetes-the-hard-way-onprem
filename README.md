@@ -44,3 +44,8 @@
 * [Deploying the DNS Cluster Add-on](docs/12-dns-addon.md)
 * [Smoke Test](docs/13-smoke-test.md)
 * [Cleaning Up](docs/14-cleanup.md)
+
+
+## 참고 사이트
+* [Kubernetes The Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way)
+* [kubernetes-the-hard-way-modified](https://github.com/jmyung/kubernetes-the-hard-way-modified)
