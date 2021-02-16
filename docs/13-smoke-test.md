@@ -238,6 +238,15 @@ curl -I http://${EXTERNAL_IP}
 > output
 
 ```
+HTTP/1.1 200 OK
+Server: nginx/1.19.6
+Date: Tue, 16 Feb 2021 05:16:56 GMT
+Content-Type: text/html
+Content-Length: 612
+Last-Modified: Tue, 15 Dec 2020 13:59:38 GMT
+Connection: keep-alive
+ETag: "5fd8c14a-264"
+Accept-Ranges: bytes
 ```
 
 Next: [Cleaning Up](14-cleanup.md)
