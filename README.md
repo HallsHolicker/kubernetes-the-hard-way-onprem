@@ -14,7 +14,7 @@
 ## Differences from kubernetes-the-hard-way by Kelsey Hightower 
 
 * CNI는 Calico를 사용하였습니다.
-* On-premise의 환경에서 사용하는 LB로는 MetalLB로 구현하였습니다.
+* On-premise의 환경에서 사용하는 LoadBalancer는 MetalLB로 구성하였습니다.
 * Kube-apiserver의 Endpoint 단일화를 위해 Master node에 Keepalived/Haproxy를 추가 구성하였습니다.
 
 ## Cluster Details
