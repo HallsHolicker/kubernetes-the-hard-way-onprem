@@ -379,17 +379,15 @@ Haproxy 정상 동작 확인
 curl -H "Host: kubernetes.default.svc.cluster.local" -i http://127.0.0.1/healthz
 ```
 
-아직 kubernetes API server를 실행하지 않았기에 503 에러가 나옵니다. Kubernetes API Server까지 설정을 완료하고 다시 확인을 하도록 하겠습니다.
+이제 kubernetes API server가 동작하기 때문에 정상적인 페이지를 확인하게 됩니다.
 
 ```
-HTTP/1.0 503 Service Unavailable
-Cache-Control: no-cache
-Connection: close
-Content-Type: text/html
-
-<html><body><h1>503 Service Unavailable</h1>
-No server is available to handle this request.
-</body></html>
+HTTP/1.1 200 OK
+Cache-Control: no-cache, private
+Content-Type: text/plain; charset=utf-8
+X-Content-Type-Options: nosniff
+Date: Fri, 19 Feb 2021 15:21:21 GMT
+Content-Length: 2
 ```
 
 

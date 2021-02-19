@@ -1,0 +1,1 @@
+{"dependencies":[["vagrant-vyos",["= 1.1.7"]]],"checksum":"707f5f21d6cd54263514c885b11dd629ccb09387e4a1bddfb0e103e48e0abcdb","vagrant_version":"2.2.14"}
