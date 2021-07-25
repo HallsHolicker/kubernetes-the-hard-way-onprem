@@ -223,10 +223,22 @@ External IP 확인:
 EXTERNAL_IP=$(kubectl get svc nginx --output=jsonpath='{.status.loadBalancer.ingress[0].ip}')
 ```
 
-k8s-client에서 EXTERNAL_IP 라우팅 설정:
+BGP로 전파 받는지 확인
 
 ```
-sudo ip route add ${EXTERNAL_IP} via ${WORKER_IP} dev enp0s8
+ip route
+```
+
+>output
+> 아래의 값은 테스트 때마다 다를 수 있으며, EXTERNAL_IP가 있는지 확인만 되면 됩니다.
+
+```
+default via 10.0.2.2 dev enp0s3 proto dhcp metric 100
+10.0.2.0/24 dev enp0s3 proto kernel scope link src 10.0.2.15 metric 100
+10.240.0.0/24 dev enp0s8 proto kernel scope link src 10.240.0.100 metric 101
+192.168.72.0 proto bgp metric 20
+	nexthop via 10.240.0.21 dev enp0s8 weight 1
+	nexthop via 10.240.0.23 dev enp0s8 weight 1
 ```
 
 External IP를 이용하여 HTTP 요청:

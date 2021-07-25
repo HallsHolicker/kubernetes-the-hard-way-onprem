@@ -55,6 +55,41 @@ vagrant up
 
 ## Configuring SSH Access & Hostname & /etc/hosts
 
+서버 접속 및 기본 설정을 위해서 초기에는 Bash Script로 진행하였으며, 이번에는 Ansible로 진행을 해보도록 하겠습니다.
+Bash Script로 진행하였던 설정은 Ansible 설정 하단에 위치하고 있습니다.
+
+### Ansible Version
+
+K8S를 연습하기 전에 서버 접속 및 hostname등 기본적인 세팅을 진행 합니다.
+K8S 설정 작업은 `k8s-client`에서 진행을 할 예정이며, 원활한 접속을 위해 k8s-client의 ssh key 및 hostname을 전체 서버에 설정하겠습니다.
+
+Ansible 설정을 github에서 가져옵니다.
+```
+vagrant ssh k8s-client
+sudo dnf -y install ansible
+
+git clone https://github.com/HallsHolicker/kubernetes-the-hard-way-onprem.git
+```
+
+SSH fingerprint 정보를 확인해서 known_hosts에 등록합니다.
+
+```
+cd kubernetes-the-hard-way-onprem
+cd ansible
+ansible-playbook -i inventories/hosts ssh_known_host.yml
+```
+
+SSH Key 복사, hostname 설정, /etc/hosts 등록을 합니다. 
+최초 설정시에는 ssh key 복사가 되지 않았기에 패스워드를 입력하기 위해 -k 옵션을 설정해서 실행하고, 추후는 -k 옵션 없이도 가능합니다.
+password : vagrant
+```
+ansible-playbook -i inventories/hosts main.yml -k
+```
+
+
+
+### Bash Script Version
+
 K8S를 연습하기 전에 서버 접속 및 hostname등 기본적인 세팅을 진행 합니다.
 K8S 설정 작업은 `k8s-client`에서 진행을 할 예정이며, 원활한 접속을 위해 k8s-client의 ssh key 및 hostname을 전체 서버에 설정하겠습니다.
 

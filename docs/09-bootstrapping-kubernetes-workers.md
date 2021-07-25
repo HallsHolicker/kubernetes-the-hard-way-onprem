@@ -26,7 +26,7 @@ ssh k8s-worker-1
 의존성 설치:
 
 ```
-sudo dnf -y install socat conntrack
+sudo dnf -y install socat conntrack ipset
 ```
 
 > socat은 `kubectl port-forward` 명령어를 지원하기 위함입니다.
@@ -51,13 +51,13 @@ sudo swapoff -a
 
 ```
 wget -q --show-progress --https-only --timestamping \
-  https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-linux-amd64.tar.gz \
-  https://github.com/opencontainers/runc/releases/download/v1.0.0-rc8/runc.amd64 \
-  https://github.com/containernetworking/plugins/releases/download/v0.8.2/cni-plugins-linux-amd64-v0.8.2.tgz \
-  https://github.com/containerd/containerd/releases/download/v1.2.9/containerd-1.2.9.linux-amd64.tar.gz \
-  https://storage.googleapis.com/kubernetes-release/release/v1.15.3/bin/linux/amd64/kubectl \
-  https://storage.googleapis.com/kubernetes-release/release/v1.15.3/bin/linux/amd64/kube-proxy \
-  https://storage.googleapis.com/kubernetes-release/release/v1.15.3/bin/linux/amd64/kubelet
+  https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.21.0/crictl-v1.21.0-linux-amd64.tar.gz \
+  https://github.com/opencontainers/runc/releases/download/v1.0.0-rc93/runc.amd64 \
+  https://github.com/containernetworking/plugins/releases/download/v0.9.1/cni-plugins-linux-amd64-v0.9.1.tgz \
+  https://github.com/containerd/containerd/releases/download/v1.4.4/containerd-1.4.4-linux-amd64.tar.gz \
+  https://storage.googleapis.com/kubernetes-release/release/v1.21.0/bin/linux/amd64/kubectl \
+  https://storage.googleapis.com/kubernetes-release/release/v1.21.0/bin/linux/amd64/kube-proxy \
+  https://storage.googleapis.com/kubernetes-release/release/v1.21.0/bin/linux/amd64/kubelet
 ```
 
 각 구성요소의 디렉토리 생성:
@@ -77,9 +77,9 @@ sudo mkdir -p \
 ```
 {
   mkdir containerd
-  tar -xvf crictl-v1.15.0-linux-amd64.tar.gz
-  tar -xvf containerd-1.2.9.linux-amd64.tar.gz -C containerd
-  sudo tar -xvf cni-plugins-linux-amd64-v0.8.2.tgz -C /opt/cni/bin/
+  tar -xvf crictl-v1.21.0-linux-amd64.tar.gz
+  tar -xvf containerd-1.4.4-linux-amd64.tar.gz -C containerd
+  sudo tar -xvf cni-plugins-linux-amd64-v0.9.1.tgz -C /opt/cni/bin/
   sudo mv runc.amd64 runc
   chmod +x crictl kubectl kube-proxy kubelet runc 
   sudo mv crictl kubectl kube-proxy kubelet runc /usr/local/bin/
@@ -260,9 +260,9 @@ Kubernetes nodes 등록 상태 확인:
 
 ```
 NAME           STATUS     ROLES    AGE    VERSION
-k8s-worker-1   NotReady   <none>   109s   v1.15.3
-k8s-worker-2   NotReady   <none>   109s   v1.15.3
-k8s-worker-3   NotReady   <none>   109s   v1.15.3
+k8s-worker-1   NotReady   <none>   109s   v1.21.0
+k8s-worker-2   NotReady   <none>   109s   v1.21.0
+k8s-worker-3   NotReady   <none>   109s   v1.21.0
 ```
 
 아직 네트워크 CNI를 설정하지 않았기 때문에 NotReady 상태로 표시 됩니다.

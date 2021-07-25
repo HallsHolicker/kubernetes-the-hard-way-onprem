@@ -1,0 +1,16 @@
+- name: SSH keygen
+  connection: local
+  shell: "ssh-keygen -q -b 2048 -t rsa -N '' -f ~/.ssh/id_rsa"
+  ignore_errors: yes
+  run_once: true
+
+- name: Read id_rsa.pub
+  connection: local
+  command: "cat ~/.ssh/id_rsa.pub"
+  register: id_rsa_pub
+  run_once: true
+
+- name: Add remote authorized_keys
+  lineinfile:
+    dest: ~/.ssh/authorized_keys
+    line: " {{id_rsa_pub.stdout}}"

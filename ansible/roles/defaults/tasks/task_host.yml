@@ -1,0 +1,19 @@
+- name: Set hostname
+  command: "hostnamectl set-hostname {{ hostname }}"
+  become: true
+
+- name: Add /etc/hosts
+  lineinfile:
+    dest: /etc/hosts
+    line: "{{ item.ip }} {{ item.hostname }}"
+  with_items:
+    - { ip: '10.240.0.10', hostname: 'k8s-controller' }
+    - { ip: '10.240.0.11', hostname: 'k8s-controller-1' }
+    - { ip: '10.240.0.12', hostname: 'k8s-controller-2' }
+    - { ip: '10.240.0.13', hostname: 'k8s-controller-3' }
+    - { ip: '10.240.0.21', hostname: 'k8s-worker-1' }
+    - { ip: '10.240.0.22', hostname: 'k8s-worker-2' }
+    - { ip: '10.240.0.23', hostname: 'k8s-worker-3' }
+    - { ip: '10.240.0.100', hostname: 'k8s-client' }
+  become: true
+  

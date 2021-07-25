@@ -1,0 +1,5 @@
+# SSH Tasks
+- import_tasks: task_ssh.yml
+
+# Set hostname && Add /etc/hosts
+- import_tasks: task_host.yml

@@ -9,7 +9,7 @@
 
 ## Architecture
 
-![architecture](docs/images/kubernetes_hardway.png "architecture")
+![architecture](docs/images/kubernetes_hardway_1.png "architecture")
 
 ## Differences from kubernetes-the-hard-way by Kelsey Hightower 
 
@@ -19,13 +19,14 @@
 
 ## Cluster Details
 
-* [kubernetes](https://github.com/kubernetes/kubernetes) v1.18.6
-* [containerd](https://github.com/containerd/containerd) v1.3.6
-* [coredns](https://github.com/coredns/coredns) v1.7.0
-* [cni](https://github.com/containernetworking/cni) v0.8.6
-* [etcd](https://github.com/coreos/etcd) v3.4.10
-* [calico](https://github.com/projectcalico/calico) v3.17
-* [MetalLB](https://metallb.universe.tf) v0.9.5
+* [kubernetes](https://github.com/kubernetes/kubernetes) v1.21.0
+* [containerd](https://github.com/containerd/containerd) v1.4.4
+* [coredns](https://github.com/coredns/coredns) v1.8.3
+* [cni](https://github.com/containernetworking/cni) v0.9.1
+* [etcd](https://github.com/coreos/etcd) v3.4.15
+* [calico](https://github.com/projectcalico/calico) v3.19.1
+* [MetalLB](https://metallb.universe.tf) v0.10.2
+* [FRRouting](https://frrouting.org/) v7.5.1
 
 ## Labs
 

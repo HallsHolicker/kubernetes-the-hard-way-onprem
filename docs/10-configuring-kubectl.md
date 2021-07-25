@@ -41,6 +41,17 @@ ssh k8s-client
 Check the health of the remote Kubernetes cluster:
 
 ```
+kubectl version
+```
+
+> output
+
+```
+Client Version: version.Info{Major:"1", Minor:"21", GitVersion:"v1.21.0", GitCommit:"cb303e613a121a29364f75cc67d3d580833a7479", GitTreeState:"clean", BuildDate:"2021-04-08T16:31:21Z", GoVersion:"go1.16.1", Compiler:"gc", Platform:"linux/amd64"}
+Server Version: version.Info{Major:"1", Minor:"21", GitVersion:"v1.21.0", GitCommit:"cb303e613a121a29364f75cc67d3d580833a7479", GitTreeState:"clean", BuildDate:"2021-04-08T16:25:06Z", GoVersion:"go1.16.1", Compiler:"gc", Platform:"linux/amd64"}
+```
+
+```
 kubectl get componentstatuses
 ```
 
@@ -65,9 +76,9 @@ kubectl get nodes
 
 ```
 NAME           STATUS     ROLES    AGE   VERSION
-k8s-worker-1   NotReady   <none>   2m9s  v1.15.3
-k8s-worker-2   NotReady   <none>   2m9s  v1.15.3
-k8s-worker-3   NotReady   <none>   2m9s  v1.15.3
+k8s-worker-1   NotReady   <none>   2m9s  v1.21.0
+k8s-worker-2   NotReady   <none>   2m9s  v1.21.0
+k8s-worker-3   NotReady   <none>   2m9s  v1.21.0
 ```
 
 Next: [Provisioning Pod Network Routes](11-pod-network-routes.md)

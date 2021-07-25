@@ -24,15 +24,15 @@ ssh k8s-controller-1
 
 ```
 wget -q --show-progress --https-only --timestamping \
-  "https://github.com/etcd-io/etcd/releases/download/v3.4.0/etcd-v3.4.0-linux-amd64.tar.gz"
+  "https://github.com/etcd-io/etcd/releases/download/v3.4.5/etcd-v3.4.5-linux-amd64.tar.gz"
 ```
 
 압축을 풀고 `etcd` 서버와 `etcdctl` 명령어 유틸리티를 설치합니다.
 
 ```
 {
-  sudo tar -xvf etcd-v3.4.0-linux-amd64.tar.gz
-  sudo mv etcd-v3.4.0-linux-amd64/etcd* /usr/local/bin/
+  sudo tar -xvf etcd-v3.4.5-linux-amd64.tar.gz
+  sudo mv etcd-v3.4.5-linux-amd64/etcd* /usr/local/bin/
 }
 ```
 

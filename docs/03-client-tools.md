@@ -16,8 +16,8 @@
 
 ```
 wget -q --show-progress --https-only --timestamping \
-  https://storage.googleapis.com/kubernetes-the-hard-way/cfssl/linux/cfssl \
-  https://storage.googleapis.com/kubernetes-the-hard-way/cfssl/linux/cfssljson
+  https://storage.googleapis.com/kubernetes-the-hard-way/cfssl/1.4.1/linux/cfssl \
+  https://storage.googleapis.com/kubernetes-the-hard-way/cfssl/1.4.1/linux/cfssljson
 ```
 
 ```
@@ -31,7 +31,7 @@ sudo mv cfssl cfssljson /usr/local/bin/
 ### Verification
 
 
-`cfssl`와 `cfssljson`의 설치 버전이 1.3.4 이상인지 확인합니다.
+`cfssl`와 `cfssljson`의 설치 버전이 1.4.1 이상인지 확인합니다.
 
 ```
 cfssl version
@@ -40,9 +40,8 @@ cfssl version
 > output
 
 ```
-Version: 1.3.4
-Revision: dev
-Runtime: go1.13
+Version: 1.4.4
+Runtime: go1.12.12
 ```
 
 ```
@@ -50,9 +49,8 @@ cfssljson --version
 
 ```
 ```
-Version: 1.3.4
-Revision: dev
-Runtime: go1.13
+Version: 1.4.4
+Runtime: go1.12.12
 ```
 
 ## Install kubectl
@@ -60,7 +58,7 @@ Runtime: go1.13
 `kubectl`은 Kubernetes API Server와 통신을 하기 위한 유틸리티입니다. 공식 릴리즈된 바이너리 버전을 설치하겠습니다.
 
 ```
-wget https://storage.googleapis.com/kubernetes-release/release/v1.15.3/bin/linux/amd64/kubectl
+wget https://storage.googleapis.com/kubernetes-release/release/v1.21.0/bin/linux/amd64/kubectl
 ```
 
 ```
@@ -73,7 +71,7 @@ sudo mv kubectl /usr/local/bin/
 
 ### Verification
 
-`kubectl`의 설치 버전이 1.15.3 이상인지 확인합니다.
+`kubectl`의 설치 버전이 1.21.0 이상인지 확인합니다.
 
 ```
 kubectl version --client
@@ -82,7 +80,7 @@ kubectl version --client
 > output
 
 ```
-Client Version: version.Info{Major:"1", Minor:"15", GitVersion:"v1.15.3", GitCommit:"2d3c76f9091b6bec110a5e63777c332469e0cba2", GitTreeState:"clean", BuildDate:"2019-08-19T11:13:54Z", GoVersion:"go1.12.9", Compiler:"gc", Platform:"linux/amd64"}
+Client Version: version.Info{Major:"1", Minor:"21", GitVersion:"v1.21.0", GitCommit:"cb303e613a121a29364f75cc67d3d580833a7479", GitTreeState:"clean", BuildDate:"2021-04-08T16:31:21Z", GoVersion:"go1.16.1", Compiler:"gc", Platform:"linux/amd64"}
 ```
 
 Next: [Provisioning a CA and Generating TLS Certificates](04-certificate-authority.md)
