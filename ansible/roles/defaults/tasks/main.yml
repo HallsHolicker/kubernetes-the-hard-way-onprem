@@ -27,4 +27,7 @@
 #- import_tasks: task_09_bootstrapping_worker_nodes.yml
 
 # 10-configuring-kubectl
-#- import_tasks: task_100_configuring_kubectl.yml
+#- import_tasks: task_10_configuring_kubectl.yml
+
+# 11-pod-netowkr-routes
+#- import_tasks: task_11_pod_network_routes.yml

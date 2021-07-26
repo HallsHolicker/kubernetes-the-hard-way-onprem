@@ -1,0 +1,26 @@
+- name: Download calico manifest
+  get_url:
+    url: https://docs.projectcalico.org/manifests/calico.yaml
+    dest: ~/k8s
+  when:
+    - "'Client' in group_names"
+
+- name: Replace calico yaml
+  path: ~/k8s/calico.yaml
+  regexp: "{{ item.from }}"
+  replace: "{{ item.to }}"
+  with_items:
+    - {
+        {
+          from: "# - name: CALICO_IPV4POOL_CIDR",
+          to: " - name: CALICO_IPV4POOL_CIDR",
+        },
+      }
+    - {
+        {
+          from: '#   value: "192.168.0.0/16"',
+          to: '   value: "192.168.0.0/16"',
+        },
+      }
+  when:
+    - "'Client' in group_names"
