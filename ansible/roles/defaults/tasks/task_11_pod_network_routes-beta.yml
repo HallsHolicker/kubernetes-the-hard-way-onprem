@@ -6,21 +6,102 @@
     - "'Client' in group_names"
 
 - name: Replace calico yaml
-  path: ~/k8s/calico.yaml
-  regexp: "{{ item.from }}"
-  replace: "{{ item.to }}"
+  shell: "sed -i 's|# - name: CALICO_IPV4POOL_CIDR|- name: CALICO_IPV4POOL_CIDR|g' ~/k8s/calico.yaml"
+  when:
+    - "'Client' in group_names"
+
+- name: Replace calico yaml
+  shell: 'sed -i ''s|#   value: "192.168.0.0/16"|  value: "10.200.0.0/16"|g'' ~/k8s/calico.yaml'
+  when:
+    - "'Client' in group_names"
+
+- name: Apply calico
+  shell: "cd ~/k8s && kubectl apply -f calico.yaml"
+  when:
+    - "'Client' in group_names"
+
+- name: Wait calico Running
+  shell: "cd ~/k8s && kubectl -n kube-system get pods -o wide | grep Running | wc -l"
+  register: calico_running
+  until: calico_running.stdout == 4
+  when:
+    - "'Client' in group_names"
+
+- name: Download metalLb manifest
+  get_url:
+    url: "{{ item }}"
+    dest: ~/k8s
   with_items:
-    - {
-        {
-          from: "# - name: CALICO_IPV4POOL_CIDR",
-          to: " - name: CALICO_IPV4POOL_CIDR",
-        },
-      }
-    - {
-        {
-          from: '#   value: "192.168.0.0/16"',
-          to: '   value: "192.168.0.0/16"',
-        },
-      }
+    - https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/namespace.yaml
+    - https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/metallb.yaml
+  when:
+    - "'Client' in group_names"
+
+- name: Apply metallb namespace
+  shell: "cd ~/k8s && kubectl apply -f namespace.yaml"
+  when:
+    - "'Client' in group_names"
+
+- name: Apply metallb
+  shell: "cd ~/k8s && kubectl apply -f metallb.yaml"
+  when:
+    - "'Client' in group_names"
+
+- name: Check metallb secret
+  shell: " cd ~/k8s && kubectl -n metallb-system get secret memberlist | wc -l"
+  register: metallb_secret_exists
+  when:
+    - "'Client' in group_names"
+
+- name: Create metallb secret key
+  shell: "openssl rand -base64 128"
+  register: metallb_secret_key
+  when:
+    - "'Client' in group_names"
+    - metallb_secret_exists.stdout == 2
+
+- name: Apply metallb secret
+  shell: " cd ~/k8s && kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey={{ metallb_secret_key.stdout }}"
+  when:
+    - "'Client' in group_names"
+    - metallb_secret_exists.stdout == 2
+
+- name: Copy Metallb configmap
+  template:
+    src: metallb_configmap.j2
+    dest: ~/k8s/metallb_configmap
+  when:
+    - "'Client' in group_names"
+
+- name: Add FRRouting repo
+  dnf:
+    name: "https://rpm.frrouting.org/repo/frr-stable-repo-1-0.el8.noarch.rpm"
+    state: present
+  when:
+    - "'Client' in group_names"
+
+- name: Install FRRouting
+  dnf:
+    name: ["frr", "frr-pythontools"]
+    state: latest
+  when:
+    - "'Client' in group_names"
+
+- name: Config FRRouting
+  copy:
+    src: frr.conf
+    dset: /etc/frr/frr.conf
+  become: true
+  when:
+    - "'Client' in group_names"
+
+# Restart FRRouting
+- name: Restart FRRouting
+  systemd:
+    name: frr
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  become: true
   when:
     - "'Client' in group_names"
