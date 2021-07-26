@@ -11,7 +11,7 @@
 - name: Create admin set credentials
   connection: local
   shell: "cd ~/k8s && kubectl config set-credentials admin \
-    --client-certificate=adminpem \
+    --client-certificate=admin.pem \
     --client-key=admin-key.pem"
   when:
     - "'Client' in group_names "
