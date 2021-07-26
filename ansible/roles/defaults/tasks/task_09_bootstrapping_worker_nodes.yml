@@ -86,10 +86,7 @@
     - "'Worker' in group_names"
 
 - name: Copy circtl, kubectl, kube-proxy, kubelet, runc to /usr/local/bin
-  copy:
-    src: "{{ v_user_home }}/{{ item }}"
-    dest: /usr/local/bin
-    remote_src: true
+  command: "{{ v_user_home }}/{{ item }} /usr/local/bin"
   with_items:
     - crictl
     - kubectl

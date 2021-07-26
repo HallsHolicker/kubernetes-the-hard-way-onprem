@@ -87,8 +87,13 @@
   when:
     - "'Controller' in group_names"
 
-- name: Move kube-apiserver/controller-manager/scheduler, kubectl to /usr/local/bin
-  shell: "mv kube-apiserver kube-controller-manager kube-scheduler kubectl /usr/local/bin/"
+- name: Copy kube-apiserver/controller-manager/scheduler, kubectl to /usr/local/bin
+  command: "{{ v_user_home }}/{{ item }} /usr/local/bin"
+  with_items:
+    - kube-apiserver
+    - kube-controller-manager
+    - kube-scheduler
+    - kubectl
   become: yes
   when:
     - "'Controller' in group_names"
