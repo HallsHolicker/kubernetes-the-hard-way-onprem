@@ -1,0 +1,2 @@
+- name: Apply coredns
+  shell: " cd ~/k8s && kubectl apply -f https://storage.googleapis.com/kubernetes-the-hard-way/coredns-1.8.yaml"

@@ -23,7 +23,9 @@
 - name: Wait calico Running
   shell: "cd ~/k8s && kubectl -n kube-system get pods -o wide | grep Running | wc -l"
   register: calico_running
-  until: calico_running.stdout == 4
+  until: calico_running.stdout == "4"
+  retries: 600
+  delay: 1
   when:
     - "'Client' in group_names"
 
@@ -58,13 +60,13 @@
   register: metallb_secret_key
   when:
     - "'Client' in group_names"
-    - metallb_secret_exists.stdout == 2
+    - metallb_secret_exists.stdout == "0"
 
 - name: Apply metallb secret
-  shell: " cd ~/k8s && kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey={{ metallb_secret_key.stdout }}"
+  shell: "cd ~/k8s && kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey='{{ metallb_secret_key.stdout }}'"
   when:
     - "'Client' in group_names"
-    - metallb_secret_exists.stdout == 2
+    - metallb_secret_exists.stdout == "0"
 
 - name: Copy Metallb configmap
   template:
@@ -76,7 +78,9 @@
 - name: Add FRRouting repo
   dnf:
     name: "https://rpm.frrouting.org/repo/frr-stable-repo-1-0.el8.noarch.rpm"
-    state: present
+    state: latest
+    disable_gpg_check: yes
+  become: true
   when:
     - "'Client' in group_names"
 
@@ -84,13 +88,53 @@
   dnf:
     name: ["frr", "frr-pythontools"]
     state: latest
+  become: true
   when:
     - "'Client' in group_names"
 
 - name: Config FRRouting
   copy:
     src: frr.conf
-    dset: /etc/frr/frr.conf
+    dest: /etc/frr/frr.conf
+  become: true
+  when:
+    - "'Client' in group_names"
+
+- name: Replace frr daemons
+  replace:
+    path: /etc/frr/daemons
+    regexp: "^bgpd=no"
+    replace: "bgpd=yes"
+  become: true
+  when:
+    - "'Client' in group_names"
+
+- name: Replace frr daemons
+  replace:
+    path: /etc/frr/daemons
+    regexp: "^vtysh_enable=no"
+    replace: "vtysh_enable=yes"
+  become: true
+  when:
+    - "'Client' in group_names"
+
+- name: Replace frr daemons
+  replace:
+    path: /etc/frr/daemons
+    regexp: "^#MAX_FDS=1024"
+    replace: "MAX_FDS=1024"
+  become: true
+  when:
+    - "'Client' in group_names"
+
+- name: Replace calico yaml
+  shell: 'sed -i ''s/^zebra_options="  -A 127.0.0.1 -s 90000000"/zebra_options=" --daemon -A 10.240.0.100 -s 90000000"/'' /etc/frr/daemons'
+  become: true
+  when:
+    - "'Client' in group_names"
+
+- name: Replace calico yaml
+  shell: 'sed -i ''s/^bgpd_options="   -A 127.0.0.1"/bgpd_options=" --daemon -A 10.240.0.100"/'' /etc/frr/daemons'
   become: true
   when:
     - "'Client' in group_names"

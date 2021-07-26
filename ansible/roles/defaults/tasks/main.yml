@@ -31,3 +31,6 @@
 
 # 11-pod-netowkr-routes
 #- import_tasks: task_11_pod_network_routes.yml
+
+# 12-dns-addon
+#- import_tasks: task_12_dns_addon.yml
