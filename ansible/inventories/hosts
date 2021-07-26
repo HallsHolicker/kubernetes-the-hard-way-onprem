@@ -1,3 +1,6 @@
+[Client]
+10.240.0.100 hostname=k8s-client ansible_user=vagrant
+
 [Controller]
 10.240.0.11 hostname=k8s-controller-1 ansible_user=vagrant
 10.240.0.12 hostname=k8s-controller-2 ansible_user=vagrant
@@ -7,6 +10,3 @@
 10.240.0.21 hostname=k8s-worker-1 ansible_user=vagrant
 10.240.0.22 hostname=k8s-worker-2 ansible_user=vagrant
 10.240.0.23 hostname=k8s-worker-3 ansible_user=vagrant
-
-[Client]
-10.240.0.100 hostname=k8s-client ansible_user=vagrant
