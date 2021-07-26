@@ -17,7 +17,6 @@
         - { ip: "10.240.0.23", hostname: "k8s-worker-3" }
         - { ip: "10.240.0.100", hostname: "k8s-client" }
       become: true
-      run_once: true
 
     - name: Remote SSH key scan
       command: /usr/bin/ssh-keyscan -t rsa {{ hostname }}
@@ -44,4 +43,3 @@
     - name: SSH keygen
       shell: "ssh-keygen -q -b 2048 -t rsa -N '' -f ~/.ssh/id_rsa"
       ignore_errors: yes
-      run_once: true

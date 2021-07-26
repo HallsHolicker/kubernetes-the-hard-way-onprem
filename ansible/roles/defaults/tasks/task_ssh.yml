@@ -2,7 +2,8 @@
   connection: local
   command: "cat ~/.ssh/id_rsa.pub"
   register: id_rsa_pub
-  run_once: true
+  when:
+    - "'Client' in group_names"
 
 - name: Add remote authorized_keys
   lineinfile:

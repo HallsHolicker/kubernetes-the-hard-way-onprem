@@ -66,7 +66,7 @@ K8S 설정 작업은 `k8s-client`에서 진행을 할 예정이며, 원활한 �
 Ansible 설정을 github에서 가져옵니다.
 ```
 vagrant ssh k8s-client
-sudo dnf -y install ansible
+sudo dnf -y install ansible git
 
 git clone https://github.com/HallsHolicker/kubernetes-the-hard-way-onprem.git
 ```
