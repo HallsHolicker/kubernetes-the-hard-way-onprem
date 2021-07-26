@@ -20,7 +20,9 @@
 
 - name: Move cfssl & cfssljson
   connection: local
-  command: "mv /home/vagrant/k8s/{{ item }} /usr/local/bin"
+  copy:
+    src: "{{ v_user_home }}/k8s/{{ item }}"
+    dest: /usr/local/bin
   become: true
   with_items:
     - "cfssl"

@@ -49,7 +49,7 @@
   unarchive:
     src: "crictl-{{ v_kubernetes_version }}-linux-amd64.tar.gz"
     dest: ~/
-    remote_src: yes
+    remote_src: true
   when:
     - "'Worker' in group_names"
 
@@ -64,8 +64,11 @@
   when:
     - "'Worker' in group_names"
 
-- name: Rename runc.amd64 to runc
-  command: "mv runc.amd64 runc"
+- name: Copy runc.amd64 to runc
+  copy:
+    src: runc.amd64
+    dest: runc
+    remote_src: true
   when:
     - "'Worker' in group_names"
 
@@ -82,15 +85,24 @@
   when:
     - "'Worker' in group_names"
 
-- name: Move circtl, kubectl, kube-proxy, kubelet, runc to /usr/local/bin
-  shell: "mv crictl kubectl kube-proxy kubelet runc /usr/local/bin/"
-  become: yes
+- name: Copy circtl, kubectl, kube-proxy, kubelet, runc to /usr/local/bin
+  copy:
+    src: "{{ v_user_home }}/{{ item }}"
+    dest: /usr/local/bin
+    remote_src: true
+  with_items:
+    - crictl
+    - kubectl
+    - kube-proxy
+    - kubelet
+    - runc
+  become: true
   when:
     - "'Worker' in group_names"
 
 - name: Move containerd to /bin
   shell: "mv containerd/bin/* /bin/"
-  become: yes
+  become: true
   when:
     - "'Worker' in group_names"
 
@@ -98,7 +110,7 @@
   copy:
     src: containerd_config.toml
     dest: /etc/containerd/
-  become: yes
+  become: true
   when:
     - "'Worker' in group_names"
 
@@ -106,28 +118,37 @@
   copy:
     src: containerd.service
     dest: /etc/systemd/system
-  become: yes
+  become: true
   when:
     - "'Worker' in group_names"
 
-- name: Move kubelet pem to /var/lib/kubelet
-  shell: "mv {{ v_user_home }}/{{ item }} /var/lib/kubelet"
+- name: Copy kubelet pem to /var/lib/kubelet
+  copy:
+    src: "{{ v_user_home }}/{{ item }}"
+    dest: /var/lib/kubelet/
+    remote_src: true
   with_items:
     - "{{ hostname }}-key.pem"
     - "{{ hostname }}.pem"
-  become: yes
+  become: true
   when:
     - "'Worker' in group_names"
 
-- name: Move kubelet kubeconfig to /var/lib/kubelet/kubeconfig
-  shell: "mv {{ v_user_home }}/{{ hostname }}.kubeconfig /var/lib/kubelet/kubeconfig"
-  become: yes
+- name: Copy kubelet kubeconfig to /var/lib/kubelet/kubeconfig
+  copy:
+    src: "{{ v_user_home }}/{{ hostname }}.kubeconfig"
+    dest: /var/lib/kubelet/kubeconfig
+    remote_src: true
+  become: true
   when:
     - "'Worker' in group_names"
 
-- name: Move ca.pem to /var/lib/kubernetes
-  shell: "mv {{ v_user_home }}/{{ hostname }}.kubeconfig /var/lib/kubernetes"
-  become: yes
+- name: Copy ca.pem to /var/lib/kubernetes
+  copy:
+    src: "{{ v_user_home }}/{{ hostname }}.kubeconfig"
+    dest: /var/lib/kubernetes/
+    remote_src: true
+  become: true
   when:
     - "'Worker' in group_names"
 
@@ -147,9 +168,12 @@
   when:
     - "'worker' in group_names"
 
-- name: Move kube-proxy kubeconfig to /var/lib/kube-proxy/kubeconfig
-  shell: "mv {{ v_user_home }}/kube-proxy.kubeconfig /var/lib/kube-proxy/kubeconfig"
-  become: yes
+- name: Copy kube-proxy kubeconfig to /var/lib/kube-proxy/kubeconfig
+  copy:
+    src: "{{ v_user_home }}/kube-proxy.kubeconfig"
+    dest: /var/lib/kube-proxy/kubeconfig
+    remote_src: true
+  become: true
   when:
     - "'Worker' in group_names"
 
