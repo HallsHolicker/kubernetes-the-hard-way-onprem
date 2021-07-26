@@ -142,7 +142,7 @@
 
 - name: Copy ca.pem to /var/lib/kubernetes
   copy:
-    src: "{{ v_user_home }}/{{ hostname }}.kubeconfig"
+    src: "{{ v_user_home }}/ca.pem"
     dest: /var/lib/kubernetes/
     remote_src: true
   become: true
