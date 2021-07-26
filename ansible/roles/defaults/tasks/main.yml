@@ -9,10 +9,10 @@
 #- import_tasks: task_03_client_tools.yml
 
 # 04-certificate-authority
-#- import_tasks: task_04_certificate-authority.yml
+#- import_tasks: task_04_certificate_authority.yml
 
 # 05-kubernetes-configuration-files
-#- import_tasks: task_05_kubernetes-configuration-files.yml
+#- import_tasks: task_05_kubernetes_configuration_files.yml
 
 # 06-data-encryption-keys
 #- import_tasks: task_06_data_encryption_keys.yml
