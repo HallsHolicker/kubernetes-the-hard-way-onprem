@@ -163,7 +163,7 @@
     dest: /etc/systemd/system
   become: true
   when:
-    - "'worker' in group_names"
+    - "'Worker' in group_names"
 
 - name: Copy kube-proxy kubeconfig to /var/lib/kube-proxy/kubeconfig
   copy:
