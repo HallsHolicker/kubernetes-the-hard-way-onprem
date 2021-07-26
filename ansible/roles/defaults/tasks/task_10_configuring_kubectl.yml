@@ -1,0 +1,31 @@
+# Create Worker kubeconfig
+- name: Create admin set cluster
+  connection: local
+  shell: "cd ~/k8s && kubectl config set-cluster kubernetes-the-hard-way \
+    --certificate-authority=ca.pem \
+    --embed-certs=true \
+    --server=https://{{ v_external_ip }}:6443"
+  when:
+    - "'Client' in group_names "
+
+- name: Create admin set credentials
+  connection: local
+  shell: "cd ~/k8s && kubectl config set-credentials admin \
+    --client-certificate=adminpem \
+    --client-key=admin-key.pem"
+  when:
+    - "'Client' in group_names "
+
+- name: Create admin set context
+  connection: local
+  shell: "cd ~/k8s && kubectl config set-context kubernetes-the-hard-way \
+    --cluster=kubernetes-the-hard-way \
+    --user=admin"
+  when:
+    - "'Client' in group_names "
+
+- name: Set admin default kubeconfig
+  connection: local
+  shell: "cd ~/k8s && kubectl config use-context kubernetes-the-hard-way"
+  when:
+    - "'Client' in group_names "

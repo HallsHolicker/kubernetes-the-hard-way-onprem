@@ -26,3 +26,5 @@
 # 09-bootstrapping-the-kubernetes-worker-nodes
 #- import_tasks: task_09_bootstrapping_worker_nodes.yml
 
+# 10-configuring-kubectl
+#- import_tasks: task_100_configuring_kubectl.yml
