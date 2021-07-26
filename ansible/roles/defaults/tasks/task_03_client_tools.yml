@@ -1,0 +1,37 @@
+- name: Download cfssl & cfssljosn
+  connection: local
+  get_url:
+    url: "{{ item }}"
+    dest: "~/"
+    mode: 0775
+  with_items:
+    - "https://storage.googleapis.com/kubernetes-the-hard-way/cfssl/{{ v_cfssl_version }}/linux/cfssl"
+    - "https://storage.googleapis.com/kubernetes-the-hard-way/cfssl/{{ v_cfssl_version }}/linux/cfssljson"
+  when:
+    - "'Client' in group_names "
+
+- name: Move cfssl & cfssljson
+  connection: local
+  command: "mv /home/vagrant/{{ item }} /usr/local/bin"
+  become: true
+  with_items:
+    - "cfssl"
+    - "cfssljson"
+  when:
+    - "'Client' in group_names "
+
+- name: Download kubectl
+  connection: local
+  get_url:
+    url: "https://storage.googleapis.com/kubernetes-release/release/{{ v_kubernetes_version }}/bin/linux/amd64/kubectl"
+    dest: "~/"
+    mode: 0775
+  when:
+    - "'Client' in group_names "
+
+- name: Move kubectl
+  connection: local
+  command: "mv /home/vagrant/kubectl /usr/local/bin"
+  become: true
+  when:
+    - "'Client' in group_names "

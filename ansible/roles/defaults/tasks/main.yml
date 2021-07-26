@@ -1,5 +1,10 @@
+- include_vars: var_kubernetes.yml
+
 # SSH Tasks
 - import_tasks: task_ssh.yml
 
 # Set hostname && Add /etc/hosts
 - import_tasks: task_host.yml
+
+# 03-client-tool Task
+- import_tasks: task_03_client_tool.yml
