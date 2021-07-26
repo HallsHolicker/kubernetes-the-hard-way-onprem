@@ -21,7 +21,7 @@
     - "'Client' in group_names"
 
 - name: Wait calico Running
-  shell: "cd ~/k8s && kubectl -n kube-system get pods -o wide | grep Running | wc -l"
+  shell: "cd ~/k8s && kubectl -n kube-system get pods -o wide | grep calico | grep Running | wc -l"
   register: calico_running
   until: calico_running.stdout == "4"
   retries: 600
@@ -72,6 +72,11 @@
   template:
     src: metallb_configmap.j2
     dest: ~/k8s/metallb_configmap
+  when:
+    - "'Client' in group_names"
+
+- name: Apply Metallb configmap
+  shell: "cd ~/k8s && kubectl create -f metallb_configmap"
   when:
     - "'Client' in group_names"
 

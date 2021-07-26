@@ -45,6 +45,7 @@ kubectl apply -f calico.yaml
 ## Verification Calico
 
 Calico가 정상 동작하기까지는 약 2~3분 정도 소요됩니다.
+무선 환경에서 배포할 경우 인터넷 환경에 따라 1시간 이상이 소요될 수도 있습니다. -0-
 
 ```
 kubectl get pods -n kube-system
