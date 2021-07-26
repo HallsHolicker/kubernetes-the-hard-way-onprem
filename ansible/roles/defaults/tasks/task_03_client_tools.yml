@@ -1,8 +1,16 @@
+- name: Make k8s directory
+  connection: local
+  file:
+    path: "~/k8s"
+    state: directory
+  when:
+    - "'Client' in group_names "
+
 - name: Download cfssl & cfssljosn
   connection: local
   get_url:
     url: "{{ item }}"
-    dest: "~/"
+    dest: "~/k8s"
     mode: 0775
   with_items:
     - "https://storage.googleapis.com/kubernetes-the-hard-way/cfssl/{{ v_cfssl_version }}/linux/cfssl"
@@ -12,7 +20,7 @@
 
 - name: Move cfssl & cfssljson
   connection: local
-  command: "mv /home/vagrant/{{ item }} /usr/local/bin"
+  command: "mv /home/vagrant/k8s/{{ item }} /usr/local/bin"
   become: true
   with_items:
     - "cfssl"
@@ -24,14 +32,14 @@
   connection: local
   get_url:
     url: "https://storage.googleapis.com/kubernetes-release/release/{{ v_kubernetes_version }}/bin/linux/amd64/kubectl"
-    dest: "~/"
+    dest: "~/k8s"
     mode: 0775
   when:
     - "'Client' in group_names "
 
 - name: Move kubectl
   connection: local
-  command: "mv /home/vagrant/kubectl /usr/local/bin"
+  command: "mv /home/vagrant/k8s/kubectl /usr/local/bin"
   become: true
   when:
     - "'Client' in group_names "

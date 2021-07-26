@@ -1,0 +1,220 @@
+- name: Copy ca-config & csr files
+  connection: local
+  copy:
+    src: "{{ item }}"
+    dest: "~/k8s"
+  with_items:
+    - ca-config.json
+    - ca-csr.json
+    - admin-csr.json
+    - kube-controller-manager-csr.json
+    - kube-proxy-csr.json
+    - kube-scheduler-csr.json
+    - kubernetes-csr.json
+    - service-account-csr.json
+  when:
+    - "'Client' in group_names "
+
+# Create CA certificate & key file
+- name: Create CA certificate & key file
+  connection: local
+  shell: "cd ~/k8s && cfssl gencert -initca ca-csr.json | cfssljson -bare ca"
+  when:
+    - "'Client' in group_names "
+
+- name: Check exists file ca-key.pem & ca.pem
+  connection: local
+  stat:
+    path: ~/k8s/{{ item }}
+  with_items:
+    - ca-key.pem
+    - ca.pem
+  register: check_ca_file_exists
+  when:
+    - "'Client' in group_names "
+  failed_when: check_ca_file_exists.stat.exists == False
+
+# Create admin certificate & key file
+- name: Create admin certificate & key file
+  connection: local
+  shell: "cd ~/k8s && cfssl gencert -ca=ca.pem \
+    -ca-key=ca-key.pem \
+    -config=ca-config.json \
+    -profile=kubernetes \
+    admin-csr.json | cfssljson -bare admin"
+  when:
+    - "'Client' in group_names "
+
+- name: Check exists file admin-key.pem & admin.pem
+  connection: local
+  stat:
+    path: ~/k8s/{{ item }}
+  with_items:
+    - admin-key.pem
+    - admin.pem
+  register: check_admin_file_exists
+  when:
+    - "'Client' in group_names "
+  failed_when: check_admin_file_exists.stat.exists == False
+
+# Create Worker node certificate & key file
+- name: Copy Worker node csr files
+  connection: local
+  template:
+    src: worker-node-csr.j2
+    dest: "~/k8s/{{ hostname }}-csr.json"
+  when:
+    - "'Worker' in group_names"
+
+- name: Create worker node certificate authority files
+  connection: local
+  shell: "cd ~/k8s && cfssl gencert -ca=ca.pem \
+    -ca-key=ca-key.pem \
+    -config=ca-config.json \
+    -hostname={{ hostname }},{{ ansible_host }},{{ v_external_ip }} \
+    -profile=kubernetes \
+    {{ hostname }}-csr.json | cfssljson -bare {{ hostname }}"
+  when:
+    - "'Worker' in group_names "
+
+- name: Check exists file worker-key.pem & worker.pem
+  connection: local
+  stat:
+    path: ~/k8s/{{ item }}
+  with_items:
+    - "{{ hostname }}-key.pem"
+    - "{{ hostname }}.pem"
+  register: check_worker_file_exists
+  when:
+    - "'Worker' in group_names "
+  failed_when: check_worker_file_exists.stat.exists == False
+
+# Create kube-controller-manager certificate & key file
+- name: Create kube-controller-manager certificate authority files
+  connection: local
+  shell: "cd ~/k8s && cfssl gencert -ca=ca.pem \
+    -ca-key=ca-key.pem \
+    -config=ca-config.json \
+    -profile=kubernetes \
+    kube-controller-manager-csr.json | cfssljson -bare kube-controller-manager"
+  when:
+    - "'Client' in group_names "
+
+- name: Check exists file kube-controller-manager-key.pem & kube-controller-manager.pem
+  connection: local
+  stat:
+    path: ~/k8s/{{ item }}
+  with_items:
+    - kube-controller-manager-key.pem
+    - kube-controller-manager.pem
+  register: check_kube_controller_manager_file_exists
+  when:
+    - "'Client' in group_names "
+  failed_when: check_kube_controller_manager_file_exists.stat.exists == False
+
+# Create kube-proxy certificate & key file
+- name: Create kube-proxy certificate authority files
+  connection: local
+  shell: "cd ~/k8s && cfssl gencert -ca=ca.pem \
+    -ca-key=ca-key.pem \
+    -config=ca-config.json \
+    -profile=kubernetes \
+    kube-proxy-csr.json | cfssljson -bare kube-proxy"
+  when:
+    - "'Client' in group_names "
+
+- name: Check exists file kube-proxy-key.pem & kube-proxy.pem
+  connection: local
+  stat:
+    path: ~/k8s/{{ item }}
+  with_items:
+    - kube-proxy-key.pem
+    - kube-proxy.pem
+  register: check_kube_proxy_file_exists
+  when:
+    - "'Client' in group_names "
+  failed_when: check_kube_proxy_file_exists.stat.exists == False
+
+# Create kube-scheduler certificate & key file
+- name: Create kube-scheduler certificate authority files
+  connection: local
+  shell: "cd ~/k8s && cfssl gencert -ca=ca.pem \
+    -ca-key=ca-key.pem \
+    -config=ca-config.json \
+    -profile=kubernetes \
+    kube-scheduler-csr.json | cfssljson -bare kube-scheduler"
+  when:
+    - "'Client' in group_names "
+
+- name: Check exists file kube-scheduler-key.pem & kube-scheduler.pem
+  connection: local
+  stat:
+    path: ~/k8s/{{ item }}
+  with_items:
+    - kube-scheduler-key.pem
+    - kube-scheduler.pem
+  register: check_kube_scheduler_file_exists
+  when:
+    - "'Client' in group_names "
+  failed_when: check_kube_scheduler_file_exists.stat.exists == False
+
+# Create kubernetes certificate & key file
+- name: Create kubernetes certificate authority files
+  connection: local
+  shell: "cd ~/k8s && cfssl gencert -ca=ca.pem \
+    -ca-key=ca-key.pem \
+    -config=ca-config.json \
+    -profile=kubernetes \
+    -hostname=10.32.0.1,{{ v_kubernetes_hostname }} \
+    kubernetes-csr.json | cfssljson -bare kubernetes"
+  when:
+    - "'Client' in group_names "
+
+- name: Check exists file kubernetes-key.pem & kubernetes.pem
+  connection: local
+  stat:
+    path: ~/k8s/{{ item }}
+  with_items:
+    - kubernetes-key.pem
+    - kubernetes.pem
+  register: check_kubernetes_file_exists
+  when:
+    - "'Client' in group_names "
+  failed_when: check_kubernetes_file_exists.stat.exists == False
+
+# Create service-account certificate & key file
+- name: Create service-account certificate authority files
+  connection: local
+  shell: "cd ~/k8s && cfssl gencert -ca=ca.pem \
+    -ca-key=ca-key.pem \
+    -config=ca-config.json \
+    -profile=kubernetes \
+    service-account-csr.json | cfssljson -bare service-account"
+  when:
+    - "'Client' in group_names "
+
+- name: Check exists file service-account-key.pem & service-account.pem
+  connection: local
+  stat:
+    path: ~/k8s/{{ item }}
+  with_items:
+    - service-account-key.pem
+    - service-account.pem
+  register: check_service_account_file_exists
+  when:
+    - "'Client' in group_names "
+  failed_when: check_service_account_file_exists.stat.exists == False
+
+# Deploy each nodes
+- name: Copy ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem to controllers
+  connection: local
+  shell: "cd ~/k8s && scp ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem \
+    service-account-key.pem service-account.pem {{ hostname }}:~/"
+  when:
+    - "'Controller' in group_names"
+
+- name: Copy ca.pem ca-key.pem worker-key.pem worker.pem to workers
+  connection: local
+  shell: "cd ~/k8s && scp ca.pem ca-key.pem {{ hostname }}-key.pem {{ hostname }}.pem {{ hostname }}:~/"
+  when:
+    - "'Worker' in group_names"

@@ -1,2 +1,15 @@
 v_cfssl_version: 1.4.1
 v_kubernetes_version: v1.21.0
+v_etcd_version: v3.4.5
+v_runc_version: v1.0.0-rc93
+v_cni_version: v0.9.1
+v_containerd_version: 1.4.4
+
+v_external_ip: 10.240.0.10
+v_client_ip: 10.240.0.100
+v_kubernetes_hostname: 10.240.0.10,10.240.0.11,10.240.0.12,10.240.0.13,127.0.0.1,10.240.0.100,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.svc.cluster.local
+
+v_cluster_cidr: 10.200.0.0/16
+v_service_cluster_cidr: 10.32.0.0/24
+
+v_user_home: /home/vagrant

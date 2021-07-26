@@ -1,0 +1,213 @@
+# Setting Keepalived
+- name: Install keepalived
+  dnf:
+    name: ["openssl-devel", "libnl3-devel", "keepalived"]
+    state: latest
+  become: true
+  when:
+    - "'Controller' in group_names"
+
+- name: Config keepalived.conf
+  template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+  become: true
+  when:
+    - "'Controller' in group_names"
+
+- name: keepalived enable systemd
+  systemd:
+    name: keepalived
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  become: true
+  when:
+    - "'Controller' in group_names"
+
+# Setting Haproxy
+- name: Install haproxy
+  dnf:
+    name: ["make", "gcc", "gcc-c++", "pcre-devel", "haproxy"]
+    state: latest
+  become: true
+  when:
+    - "'Controller' in group_names"
+
+- name: Config haproxy.conf
+  copy:
+    src: haproxy.cfg
+    dest: /etc/haproxy/haproxy.cfg
+  become: true
+  when:
+    - "'Controller' in group_names"
+
+- name: Set sysctl net.ipv4.ip_nonlocal_bind
+  sysctl:
+    name: net.ipv4.ip_nonlocal_bind
+    value: 1
+    state: present
+    reload: yes
+  become: yes
+  when:
+    - "'Controller' in group_names"
+
+- name: haproxy enable systemd
+  systemd:
+    name: haproxy
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  become: true
+  when:
+    - "'Controller' in group_names"
+
+# Provision Control Plane
+- name: Make kubernetes config directory
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /etc/kubernetes/config
+    - /var/lib/kubernetes
+  become: true
+  when:
+    - "'Controller' in group_names "
+
+- name: Download kube-apiserver/controller-manager/scheduler, kubectl
+  get_url:
+    url: "{{ item }}"
+    dest: ~/
+    mode: 0775
+  with_items:
+    - "https://storage.googleapis.com/kubernetes-release/release/{{ v_kubernetes_version }}/bin/linux/amd64/kube-apiserver"
+    - "https://storage.googleapis.com/kubernetes-release/release/{{ v_kubernetes_version }}/bin/linux/amd64/kube-controller-manager"
+    - "https://storage.googleapis.com/kubernetes-release/release/{{ v_kubernetes_version }}/bin/linux/amd64/kube-scheduler"
+    - "https://storage.googleapis.com/kubernetes-release/release/{{ v_kubernetes_version }}/bin/linux/amd64/kubectl"
+  when:
+    - "'Controller' in group_names"
+
+- name: Move kube-apiserver/controller-manager/scheduler, kubectl to /usr/local/bin
+  shell: "mv kube-apiserver kube-controller-manager kube-scheduler kubectl /usr/local/bin/"
+  become: yes
+  when:
+    - "'Controller' in group_names"
+
+## Setting kube-apiserver
+- name: Copy pem file to /var/lib/kubernetes
+  copy:
+    src: "{{ v_user_home }}/{{ item }}"
+    dest: /var/lib/kubernetes
+    remote_src: yes
+  with_items:
+    - ca.pem
+    - ca-key.pem
+    - kubernetes-key.pem
+    - kubernetes.pem
+    - service-account-key.pem
+    - service-account.pem
+    - encryption-config.yaml
+  become: true
+  when:
+    - "'Controller' in group_names "
+
+- name: Create kube-apiserver.service systemd file
+  template:
+    src: kube-apiserver.service.j2
+    dest: /etc/systemd/system/kube-apiserver.service
+  become: true
+  when:
+    - "'Controller' in group_names"
+
+## Setting kube-controller-manager
+- name: Copy kube-controller-manager.kube-config
+  copy:
+    src: kube-controller-manager.kubeconfig
+    dest: /var/lib/kubernetes/
+    remote_src: yes
+  become: true
+  when:
+    - "'Controller' in group_names"
+
+- name: Create kube-controller-manager.service systemd file
+  template:
+    src: kube-controller-manager.service.j2
+    dest: /etc/systemd/system/kube-controller-manager.service
+  become: true
+  when:
+    - "'Controller' in group_names"
+
+## Setting kube-scheduler
+- name: Copy kube-scheduler.kube-config
+  copy:
+    src: kube-scheduler.kubeconfig
+    dest: /var/lib/kubernetes/
+    remote_src: yes
+  become: true
+  when:
+    - "'Controller' in group_names"
+
+- name: Create kube-scheduler.yaml
+  copy:
+    src: kube-scheduler.yaml
+    dest: /etc/kubernetes/config
+  become: true
+  when:
+    - "'Controller' in group_names"
+
+- name: Create kube-scheduler.service systemd file
+  copy:
+    src: kube-scheduler.service
+    dest: /etc/systemd/system/kube-scheduler.service
+  become: true
+  when:
+    - "'Controller' in group_names"
+
+# Start kube Control Plane
+- name: Start kube control plane
+  systemd:
+    name: "{{ item }}"
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  with_items:
+    - kube-apiserver
+    - kube-controller-manager
+    - kube-scheduler
+  become: true
+  when:
+    - "'Controller' in group_names"
+
+# Wait System up
+- name: Wait System up
+  tags: sleep60
+  wait_for:
+    delay: 60
+    timeout: 0
+  when:
+    - "'Client' in group_names"
+
+# Create RBAC clusterRole
+- name: Create K8S RBAC ClusterRole yaml
+  copy:
+    src: kube_rbac_clusterrole.yaml
+    dest: ~/k8s
+  when:
+    - "'Client' in group_names"
+
+- name: Create K8S RBAC ClusterRoleBinding yaml
+  copy:
+    src: kube_rbac_clusterrolebinding.yaml
+    dest: ~/k8s
+  when:
+    - "'Client' in group_names"
+
+- name: Apply RBAC ClusterRole
+  shell: "cd ~/k8s && kubectl apply --kubeconfig admin.kubeconfig -f kube_rbac_clusterrole.yaml"
+  when:
+    - "'Client' in group_names"
+
+- name: Apply RBAC ClusterRoleBinding
+  shell: "cd ~/k8s && kubectl apply --kubeconfig admin.kubeconfig -f kube_rbac_clusterrolebinding.yaml"
+  when:
+    - "'Client' in group_names"

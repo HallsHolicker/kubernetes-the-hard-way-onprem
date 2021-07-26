@@ -1,0 +1,240 @@
+# Create Worker kubeconfig
+- name: Create Worker set cluster
+  connection: local
+  shell: "cd ~/k8s && kubectl config set-cluster kubernetes-the-hard-way \
+    --certificate-authority=ca.pem \
+    --embed-certs=true \
+    --server=https://{{ v_external_ip }}:6443 \
+    --kubeconfig={{ hostname }}.kubeconfig"
+  when:
+    - "'Worker' in group_names "
+
+- name: Create Worker set credentials
+  connection: local
+  shell:
+    "cd ~/k8s && kubectl config set-credentials system:node:{{ hostname }} \
+    --client-certificate={{ hostname }}.pem \
+    --client-key={{ hostname }}-key.pem \
+    --embed-certs=true \
+    --kubeconfig={{ hostname }}.kubeconfig"
+  when:
+    - "'Worker' in group_names "
+
+- name: Create Worker set context
+  connection: local
+  shell: "cd ~/k8s && kubectl config set-context default \
+    --cluster=kubernetes-the-hard-way \
+    --user=system:node:{{ hostname }} \
+    --kubeconfig={{ hostname }}.kubeconfig"
+  when:
+    - "'Worker' in group_names "
+
+- name: Set context default kubeconfig
+  connection: local
+  shell: "cd ~/k8s && kubectl config use-context default --kubeconfig={{ hostname }}.kubeconfig"
+  when:
+    - "'Worker' in group_names "
+
+- name: Check exists file Worker kubeconfig
+  connection: local
+  stat:
+    path: ~/k8s/{{ hostname }}.kubeconfig
+  register: check_worker_kubeconfig_file_exists
+  when:
+    - "'Worker' in group_names "
+  failed_when: check_worker_kubeconfig_file_exists.stat.exists == False
+
+# Create kube-proxy kubeconfig
+- name: Create kube-proxy set cluster
+  connection: local
+  shell: "cd ~/k8s && kubectl config set-cluster kubernetes-the-hard-way \
+    --certificate-authority=ca.pem \
+    --embed-certs=true \
+    --server=https://{{ v_external_ip }}:6443 \
+    --kubeconfig=kube-proxy.kubeconfig"
+  when:
+    - "'Client' in group_names "
+
+- name: Create kube-proxy set credentials
+  connection: local
+  shell: "cd ~/k8s && kubectl config set-credentials system:kube-proxy \
+    --client-certificate=kube-proxy.pem \
+    --client-key=kube-proxy-key.pem \
+    --embed-certs=true \
+    --kubeconfig=kube-proxy.kubeconfig"
+  when:
+    - "'Client' in group_names "
+
+- name: Create kube-proxy set context
+  connection: local
+  shell: "cd ~/k8s && kubectl config set-context default \
+    --cluster=kubernetes-the-hard-way \
+    --user=system:kube-proxy \
+    --kubeconfig=kube-proxy.kubeconfig"
+  when:
+    - "'Client' in group_names "
+
+- name: Set context default kube-proxy kubeconfig
+  connection: local
+  shell: "cd ~/k8s && kubectl config use-context default --kubeconfig=kube-proxy.kubeconfig"
+  when:
+    - "'Client' in group_names "
+
+- name: Check exists file kube-proxy kubeconfig
+  connection: local
+  stat:
+    path: ~/k8s/kube-proxy.kubeconfig
+  register: check_kube_proxy_kubeconfig_file_exists
+  when:
+    - "'Client' in group_names "
+  failed_when: check_kube_proxy_kubeconfig_file_exists.stat.exists == False
+
+# Create kube-controller-manager kubeconfig
+- name: Create kube-controller-manager set cluster
+  connection: local
+  shell: "cd ~/k8s && kubectl config set-cluster kubernetes-the-hard-way \
+    --certificate-authority=ca.pem \
+    --embed-certs=true \
+    --server=https://{{ v_external_ip }}:6443 \
+    --kubeconfig=kube-controller-manager.kubeconfig"
+  when:
+    - "'Client' in group_names "
+
+- name: Create kube-controller-manager set credentials
+  connection: local
+  shell:
+    "cd ~/k8s && kubectl config set-credentials system:kube-controller-manager \
+    --client-certificate=kube-controller-manager.pem \
+    --client-key=kube-controller-manager-key.pem \
+    --embed-certs=true \
+    --kubeconfig=kube-controller-manager.kubeconfig"
+  when:
+    - "'Client' in group_names "
+
+- name: Create kube-controller-manager set context
+  connection: local
+  shell: "cd ~/k8s && kubectl config set-context default \
+    --cluster=kubernetes-the-hard-way \
+    --user=system:kube-controller-manager \
+    --kubeconfig=kube-controller-manager.kubeconfig"
+  when:
+    - "'Client' in group_names "
+
+- name: Set context default kubeconfig
+  connection: local
+  shell: "cd ~/k8s && kubectl config use-context default --kubeconfig=kube-controller-manager.kubeconfig"
+  when:
+    - "'Client' in group_names "
+
+- name: Check exists file kube-controller-manager kubeconfig
+  connection: local
+  stat:
+    path: ~/k8s/kube-controller-manager.kubeconfig
+  register: check_kube_controller_manager_kubeconfig_file_exists
+  when:
+    - "'Client' in group_names "
+  failed_when: check_kube_controller_manager_kubeconfig_file_exists.stat.exists == False
+
+# Create kube-scheduler kubeconfig
+- name: Create kube-scheduler set cluster
+  connection: local
+  shell: "cd ~/k8s && kubectl config set-cluster kubernetes-the-hard-way \
+    --certificate-authority=ca.pem \
+    --embed-certs=true \
+    --server=https://{{ v_external_ip }}:6443 \
+    --kubeconfig=kube-scheduler.kubeconfig"
+  when:
+    - "'Client' in group_names "
+
+- name: Create kube-scheduler set credentials
+  connection: local
+  shell: "cd ~/k8s && kubectl config set-credentials system:kube-scheduler \
+    --client-certificate=kube-scheduler.pem \
+    --client-key=kube-scheduler-key.pem \
+    --embed-certs=true \
+    --kubeconfig=kube-scheduler.kubeconfig"
+  when:
+    - "'Client' in group_names "
+
+- name: Create kube-scheduler set context
+  connection: local
+  shell: "cd ~/k8s && kubectl config set-context default \
+    --cluster=kubernetes-the-hard-way \
+    --user=system:kube-scheduler \
+    --kubeconfig=kube-scheduler.kubeconfig"
+  when:
+    - "'Client' in group_names "
+
+- name: Set context default kube-scheduler kubeconfig
+  connection: local
+  shell: "cd ~/k8s && kubectl config use-context default --kubeconfig=kube-scheduler.kubeconfig"
+  when:
+    - "'Client' in group_names "
+
+- name: Check exists file kube-scheduler kubeconfig
+  connection: local
+  stat:
+    path: ~/k8s/kube-scheduler.kubeconfig
+  register: check_kube_scheduler_kubeconfig_file_exists
+  when:
+    - "'Client' in group_names "
+  failed_when: check_kube_scheduler_kubeconfig_file_exists.stat.exists == False
+
+# Create admin kubeconfig
+- name: Create admin set cluster
+  connection: local
+  shell: "cd ~/k8s && kubectl config set-cluster kubernetes-the-hard-way \
+    --certificate-authority=ca.pem \
+    --embed-certs=true \
+    --server=https://{{ v_external_ip }}:6443 \
+    --kubeconfig=admin.kubeconfig"
+  when:
+    - "'Client' in group_names "
+
+- name: Create admin set credentials
+  connection: local
+  shell: "cd ~/k8s && kubectl config set-credentials admin \
+    --client-certificate=admin.pem \
+    --client-key=admin-key.pem \
+    --embed-certs=true \
+    --kubeconfig=admin.kubeconfig"
+  when:
+    - "'Client' in group_names "
+
+- name: Create admin set context
+  connection: local
+  shell: "cd ~/k8s && kubectl config set-context default \
+    --cluster=kubernetes-the-hard-way \
+    --user=admin \
+    --kubeconfig=admin.kubeconfig"
+  when:
+    - "'Client' in group_names "
+
+- name: Set context default admin kubeconfig
+  connection: local
+  shell: "cd ~/k8s && kubectl config use-context default --kubeconfig=admin.kubeconfig"
+  when:
+    - "'Client' in group_names "
+
+- name: Check exists file admin kubeconfig
+  connection: local
+  stat:
+    path: ~/k8s/admin.kubeconfig
+  register: check_admin_kubeconfig_file_exists
+  when:
+    - "'Client' in group_names "
+  failed_when: check_admin_kubeconfig_file_exists.stat.exists == False
+
+# Deploy each nodes
+- name: Copy admin.kubeconfig kube-controller-manager.kubeconfig kube-scheduler.kubeconfig to controllers
+  connection: local
+  shell: "cd ~/k8s && scp admin.kubeconfig kube-controller-manager.kubeconfig \
+    kube-scheduler.kubeconfig {{ hostname }}:~/"
+  when:
+    - "'Controller' in group_names"
+
+- name: Copy kube-proxy.kubeconfig worker.kubeconfig to workers
+  connection: local
+  shell: "cd ~/k8s && scp kube-proxy.kubeconfig {{ hostname }}.kubeconfig {{ hostname }}:~/"
+  when:
+    - "'Worker' in group_names"

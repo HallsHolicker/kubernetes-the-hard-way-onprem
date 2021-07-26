@@ -1,0 +1,51 @@
+global_defs {
+  router_id {{ hostname }}
+  vrrp_version 3
+}
+
+vrrp_script chk_haproxy {
+  script "/sbin/pidof haproxy"
+  interval 5
+  weight 2
+}
+
+vrrp_instance HAProxy {
+  interface enp0s8
+  virtual_router_id 51
+  {% if hostname == 'k8s-controller-1' %}
+  state MASTER
+  priority 101
+  {% elif hostname == 'k8s-controller-2' %}
+  state SLAVE
+  priority 100
+  {% else %}
+  state SLAVE
+  priority 99
+  {% endif %}
+  
+  advert_int 1
+  authentication {
+    auth_type PASS
+    auth_pass k8s-hardway
+  }
+  unicast_peer {
+    {% if ansible_host in groups['Controller'] %}
+    {% if hostname == 'k8s-controller-1' %}
+    10.240.0.12
+    10.240.0.13
+    {% elif hostname == 'k8s-controller-2' %}
+    10.240.0.11
+    10.240.0.13
+    {% else %}
+    10.240.0.12
+    10.240.0.13
+    {% endif %}
+    {% endif %}
+  }
+  virtual_ipaddress {
+    {{ v_external_ip }}
+  }
+  track_script{
+    chk_haproxy
+  }
+}

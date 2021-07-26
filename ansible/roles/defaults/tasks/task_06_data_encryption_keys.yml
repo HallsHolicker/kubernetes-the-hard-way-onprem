@@ -1,0 +1,21 @@
+- name: Create encryption key
+  connection: local
+  shell: "head -c 32 /dev/urandom | base64"
+  register: ENCRYPTION_KEY
+  when:
+    - "'Client' in group_names"
+
+- name: Create encryption-config
+  connection: local
+  template:
+    src: encryption-config.j2
+    dest: "~/k8s/encryption-config.yaml"
+  when:
+    - "'Client' in group_names"
+
+# Deploy each nodes
+- name: Copy encryption-config.yaml to controllers
+  connection: local
+  shell: "cd ~/k8s && scp encryption-config.yaml {{ hostname }}:~/"
+  when:
+    - "'Controller' in group_names"

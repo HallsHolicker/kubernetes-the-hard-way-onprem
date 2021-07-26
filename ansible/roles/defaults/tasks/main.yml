@@ -5,6 +5,24 @@
 
 # Set hostname && Add /etc/hosts
 - import_tasks: task_host.yml
-
 # 03-client-tool Task
-- import_tasks: task_03_client_tools.yml
+#- import_tasks: task_03_client_tools.yml
+
+# 04-certificate-authority
+#- import_tasks: task_04_certificate-authority.yml
+
+# 05-kubernetes-configuration-files
+#- import_tasks: task_05_kubernetes-configuration-files.yml
+
+# 06-data-encryption-keys
+#- import_tasks: task_06_data_encryption_keys.yml
+
+# 07-bootstrapping-etcd
+#- import_tasks: task_07_bootstrapping_etcd.yml
+
+# 08-bootstrapping-the-kubernetes-control-plane
+#- import_tasks: task_08_bootstrapping_control_plane.yml
+
+# 09-bootstrapping-the-kubernetes-worker-nodes
+#- import_tasks: task_09_bootstrapping_worker_nodes.yml
+

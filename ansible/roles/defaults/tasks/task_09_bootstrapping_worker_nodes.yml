@@ -1,0 +1,185 @@
+# Setting Keepalived
+- name: Install dependency packages
+  dnf:
+    name: ["socat", "conntrack", "ipset"]
+    state: latest
+  become: true
+  when:
+    - "'Worker' in group_names"
+
+- name: Download Worker Binaries
+  get_url:
+    url: "{{ item }}"
+    dest: ~/
+  with_items:
+    - "https://github.com/kubernetes-sigs/cri-tools/releases/download/{{ v_kubernetes_version }}/crictl-{{ v_kubernetes_version }}-linux-amd64.tar.gz"
+    - "https://storage.googleapis.com/kubernetes-release/release/{{ v_kubernetes_version }}/bin/linux/amd64/kube-proxy"
+    - "https://storage.googleapis.com/kubernetes-release/release/{{ v_kubernetes_version }}/bin/linux/amd64/kubelet"
+    - "https://storage.googleapis.com/kubernetes-release/release/{{ v_kubernetes_version }}/bin/linux/amd64/kubectl"
+    - "https://github.com/opencontainers/runc/releases/download/{{ v_runc_version }}/runc.amd64"
+    - "https://github.com/containernetworking/plugins/releases/download/{{ v_cni_version }}/cni-plugins-linux-amd64-{{ v_cni_version }}.tgz"
+    - "https://github.com/containerd/containerd/releases/download/v{{ v_containerd_version }}/containerd-{{ v_containerd_version }}-linux-amd64.tar.gz"
+  when:
+    - "'Worker' in group_names"
+
+- name: Make kubernetes directory
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /etc/cni/net.d
+    - /opt/cni/bin
+    - /var/lib/kubelet
+    - /var/lib/kube-proxy
+    - /var/lib/kubernetes
+    - /var/run/kubernetes
+    - /etc/containerd
+  become: true
+  when:
+    - "'Worker' in group_names "
+
+- name: Make containerd temp directory
+  file:
+    path: ~/containerd
+    state: directory
+  when:
+    - "'Worker' in group_names "
+
+- name: Unarchive crictl
+  unarchive:
+    src: "crictl-{{ v_kubernetes_version }}-linux-amd64.tar.gz"
+    dest: ~/
+    remote_src: yes
+  when:
+    - "'Worker' in group_names"
+
+- name: Unarchive containerd
+  shell: "tar -xvf containerd-{{ v_containerd_version }}-linux-amd64.tar.gz -C containerd"
+  when:
+    - "'Worker' in group_names"
+
+- name: Unarchive cni-plugins
+  shell: "tar -xvf {{ v_user_home }}/cni-plugins-linux-amd64-v0.9.1.tgz -C /opt/cni/bin/"
+  become: true
+  when:
+    - "'Worker' in group_names"
+
+- name: Rename runc.amd64 to runc
+  command: "mv runc.amd64 runc"
+  when:
+    - "'Worker' in group_names"
+
+- name: Change chmod circtl, kubectl, kube-proxy, kubelet, runc
+  file:
+    path: "~/{{ item }}"
+    mode: 0755
+  with_items:
+    - crictl
+    - kubectl
+    - kube-proxy
+    - kubelet
+    - runc
+  when:
+    - "'Worker' in group_names"
+
+- name: Move circtl, kubectl, kube-proxy, kubelet, runc to /usr/local/bin
+  shell: "mv crictl kubectl kube-proxy kubelet runc /usr/local/bin/"
+  become: yes
+  when:
+    - "'Worker' in group_names"
+
+- name: Move containerd to /bin
+  shell: "mv containerd/bin/* /bin/"
+  become: yes
+  when:
+    - "'Worker' in group_names"
+
+- name: Create Container config file
+  copy:
+    src: containerd_config.toml
+    dest: /etc/containerd/
+  become: yes
+  when:
+    - "'Worker' in group_names"
+
+- name: Create Container systemd file
+  copy:
+    src: containerd.service
+    dest: /etc/systemd/system
+  become: yes
+  when:
+    - "'Worker' in group_names"
+
+- name: Move kubelet pem to /var/lib/kubelet
+  shell: "mv {{ v_user_home }}/{{ item }} /var/lib/kubelet"
+  with_items:
+    - "{{ hostname }}-key.pem"
+    - "{{ hostname }}.pem"
+  become: yes
+  when:
+    - "'Worker' in group_names"
+
+- name: Move kubelet kubeconfig to /var/lib/kubelet/kubeconfig
+  shell: "mv {{ v_user_home }}/{{ hostname }}.kubeconfig /var/lib/kubelet/kubeconfig"
+  become: yes
+  when:
+    - "'Worker' in group_names"
+
+- name: Move ca.pem to /var/lib/kubernetes
+  shell: "mv {{ v_user_home }}/{{ hostname }}.kubeconfig /var/lib/kubernetes"
+  become: yes
+  when:
+    - "'Worker' in group_names"
+
+- name: Create kubelet config file
+  template:
+    src: kubelet-config.yaml.j2
+    dest: /var/lib/kubelet/kubelet-config.yaml
+  become: true
+  when:
+    - "'Worker' in group_names"
+
+- name: Create kubelet systemd file
+  copy:
+    src: kubelet.service
+    dest: /etc/systemd/system
+  become: true
+  when:
+    - "'worker' in group_names"
+
+- name: Move kube-proxy kubeconfig to /var/lib/kube-proxy/kubeconfig
+  shell: "mv {{ v_user_home }}/kube-proxy.kubeconfig /var/lib/kube-proxy/kubeconfig"
+  become: yes
+  when:
+    - "'Worker' in group_names"
+
+- name: Create kube-proxy config file
+  template:
+    src: kube-proxy-config.yaml.j2
+    dest: /var/lib/kube-proxy/kube-proxy-config.yaml
+  become: true
+  when:
+    - "'Worker' in group_names"
+
+- name: Create kube-proxy systemd file
+  copy:
+    src: kube-proxy.service
+    dest: /etc/systemd/system
+  become: true
+  when:
+    - "'Worker' in group_names"
+
+# Start Worker nodes
+- name: Start Worker nodes
+  systemd:
+    name: "{{ item }}"
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  with_items:
+    - containerd
+    - kubelet
+    - kube-proxy
+  become: true
+  when:
+    - "'Worker' in group_names"
